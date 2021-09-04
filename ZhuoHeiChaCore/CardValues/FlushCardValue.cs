@@ -11,12 +11,20 @@ public class FlushCardValue : Hand
         _flushSize = flushSize;
     }
 
-    public override bool CompareValue(Hand otherValue)
+    public override bool CompareValue(Hand lastHand)
     {
         // TODO
-        var a = (FlushCardValue)otherValue;
-        if(_flushSize != a._flushSize)
-            return true;
-        else return _lastNumber >= a._lastNumber;
+        if (Group != lastHand.Group)
+            return Group > lastHand.Group;
+
+        var valueToBeCompared = lastHand as FlushCardValue;
+
+        if (valueToBeCompared == null)
+            return false;
+
+        if (_flushSize != valueToBeCompared._flushSize)
+            return false;
+        
+        else return _lastNumber > valueToBeCompared._lastNumber;
     }
 }

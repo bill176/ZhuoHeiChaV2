@@ -97,10 +97,20 @@ namespace ZhuoHeiChaCore
             return cards.First().Number;
         }
 
-        public static int IsCat(List<Card> cards)
+        public static float IsCat(List<Card> cards)
         {
-            // TODO
-            return -1;
+            float catValue = 0.0f;
+            var cardTypeList = cards.Select(c => c.CardType).ToList();
+
+            if (!cards.All(s => s.Suit == Suit.Joker) || cards.Count < 2)
+                return -1f;
+
+            if(cardTypeList.Contains(CardType.JOKER_SMALL))
+                catValue += 2.1f;
+            if(cardTypeList.Contains(CardType.JOKER_BIG))
+                catValue += 2.2f;
+            
+            return catValue;
         }
     }
 }

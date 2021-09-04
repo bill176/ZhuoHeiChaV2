@@ -8,11 +8,11 @@ namespace ZhuoHeiChaCore
 {
     public class Hand
     {
-        protected float _group = 1;
+        public virtual float Group { get; protected set; } = 1;
 
         public Hand(List<Card> cards, float group)
         {
-            _group = group;
+            Group = group;
         }
 
         public virtual bool CompareValue(Hand otherValue)

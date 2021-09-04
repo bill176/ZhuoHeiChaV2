@@ -57,7 +57,7 @@ namespace ZhuoHeiChaCore
             if (catValue > 0)
             {
                 // TODO
-                // new Cat(catValue, ...)
+                return new CatsCardValue(catValue, catValue);
             }
 
             throw new Exception("Not a valid hand");

@@ -10,7 +10,11 @@ namespace ZhuoHeiChaCore.CardValues
     {
         public NoCardValue(List<Card> cards, float group) : base(cards, group)
         {
-            // TODO
+           
+        }
+        public override bool CompareValue(Hand lastHand)
+        {
+            return false;
         }
     }
 }

@@ -11,12 +11,19 @@ public class PairCardValue : Hand
         _pairNumber = pairNumber;
     }
 
-    public override bool CompareValue(Hand otherValue)
+    public override bool CompareValue(Hand lastHand)
     {
         // TODO
-        var a = (PairCardValue)otherValue;
-        if(_pairNumber != a._pairNumber)
-            return true;
-        else return _lastNumber >= a._lastNumber;
+        if (Group != lastHand.Group)
+            return Group > lastHand.Group;
+
+        var valueToBeCompared = lastHand as PairCardValue;
+        if (valueToBeCompared == null)
+            return false;
+        
+        if(_pairNumber != valueToBeCompared._pairNumber)
+            return false;
+
+        else return _lastNumber > valueToBeCompared._lastNumber;
     }
 }

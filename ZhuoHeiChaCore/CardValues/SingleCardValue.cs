@@ -10,10 +10,16 @@ public class SingleCardValue : Hand
         _cardNumber = cards[0].Number;
     }
     
-    public override bool CompareValue(Hand otherValue)
+    public override bool CompareValue(Hand lastHand)
     {
         // TODO
-        var a = (SingleCardValue)otherValue;
-        return _cardNumber >= a._cardNumber;
+        if (Group != lastHand.Group)
+            return Group > lastHand.Group;
+
+        var valueToBeCompared = lastHand as SingleCardValue;
+        if (valueToBeCompared == null)
+            return false;
+
+        return _cardNumber > valueToBeCompared._cardNumber;
     }
 }

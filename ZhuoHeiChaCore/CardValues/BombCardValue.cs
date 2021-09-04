@@ -11,18 +11,21 @@ public class BombCardValue : Hand
         _length = length;
     }
 
-    public override bool CompareValue(Hand otherValue)
+    public override bool CompareValue(Hand lastHand)
     {
         // TODO
-        var valueToBeCompared = (BombCardValue)otherValue;
+        if (Group != lastHand.Group)
+            return Group > lastHand.Group;
+
+        var valueToBeCompared = lastHand as BombCardValue;
+        if(valueToBeCompared == null)
+            return false;
 
         if (this._length != valueToBeCompared._length)
-        {
             return this._length > valueToBeCompared._length;
-        }
+        
         else 
-        {
-            return this._value >= valueToBeCompared._value;
-        }
+            return this._value > valueToBeCompared._value;
+        
     }
 }
