@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaConsole", "ZhuoHe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaCore.Test", "ZhuoHeiChaCore.Test\ZhuoHeiChaCore.Test.csproj", "{0DB5A766-5562-4A89-976C-62F2A6D4AD9E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZhuoHeiChaFunctions", "ZhuoHeiChaFunctions\ZhuoHeiChaFunctions.csproj", "{6E12C019-E597-44B0-8DC2-CF8CCC17AE94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaFunctions", "ZhuoHeiChaFunctions\ZhuoHeiChaFunctions.csproj", "{6E12C019-E597-44B0-8DC2-CF8CCC17AE94}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
