@@ -1,0 +1,40 @@
+﻿@page "/test"
+
+@using System.Net.Http
+@inject HttpClient Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+
+<h1>Test</h1>
+<p>Hello! This is a test page with shortcuts for feature testing.</p>
+
+<div>
+    <h3>Room Creation</h3>
+    <label>Room Capacity:</label><input @bind="_roomCapacity" />
+    <button @onclick="CreateRoom">Create Room</button>
+    <label>The new room id is: @_roomId</label>
+</div>
+
+@code {
+    private int _roomCapacity;
+    private string _roomId = "Haha";
+
+    private async Task CreateRoom()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"/api/room/create/{_roomCapacity}", new { });
+
+            _roomId = (await response.Content.ReadFromJsonAsync<RoomInfo>()).RoomId;
+        }
+        catch (Exception e)
+        {
+            _roomId = "Error while creating room: " + e.Message;
+        }
+    }
+
+    private class RoomInfo
+    {
+        public string RoomId { get; set; }
+    }
+}
