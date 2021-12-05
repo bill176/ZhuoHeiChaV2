@@ -47,30 +47,40 @@
 ## HTTP Endpoints
 
 ### Room
-`base = /room`
+base = `/room`
 
-#### `[base]/create/{capacity:int}`
+#### POST: `[base]/create/{capacity:int}`
 - creates a room entity in the backend with the specified capacity
-- returns room id
+- returns a JSON object with field `roomId`
 
-#### `[base]/{roomId}/join`
-- register current client to the room specified by roomId, effectively adding the player to the list of connected players in room entity
-- returns player id
+#### GET: `[base]/{roomId}`
+- gets information about the room (capacity, roomId, currently connected players, current game id, etc.)  
+- returns the room information as a JSON object
+
+---
 
 ### Player
-`base = /room/{roomId}/player/{playerId:int}`
+base = `/room/{roomId}/player`
 
-#### `[base]/setready`
-- register client to the web pub sub service, and add player to list of active/ready players in game entity
-- when all the connected players are ready, the game automatically starts
+For simplicity, a player is valid only within the scope of a room. That is, a player is no longer defined after leaving the room.
+
+#### POST: `[base]/create`
+- body is a JSON object containing the field `playerName`
+- create a new player with `playerName`
+- return a JSON object with field `playerId`
+
+#### POST: `[base]/{playerId}/setready`
+- add player to list of active/ready players in the room
+- register client to the web pub sub service
+- when all the connected players in the room are ready, the game automatically starts
 - returns `WebPubSubConnection` object
 
-#### `[base]/playcards`
+#### `POST: [base]/playcards`
 - body: contains the cards to be played
 - on success: trigger the Web Pub Sub to send another play event for the next player, updates the cards in game entity
 - on failure: return error status and keep the countdown timer
 
-#### `[base]/returntribute`
+#### `POST: [base]/returntribute`
 - body: contains the cards to be returned for tribute
 - on success: trigger next tribute or game start event on pub sub, update cards in game entity
 - on failure: return error status and keep countdown timer
@@ -97,6 +107,7 @@
 
 | name | type |
 |---|---|
+| gameId | string (same as roomId for now) |
 | currentPlayerId | int |
 | playerIdsByPlayingOrder | list of int (order of players playing cards) |
 | playerIdsByFinishingOrder | list of int (order of players finishing their cards) |
