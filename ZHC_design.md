@@ -14,10 +14,12 @@ A class for managing a game session. Its responsibilities include:
     - configure game
         - ask players about AceGoPublic
 - start game
-    - notify a player to play cards
+    - notify a player to play cards         
+    - set a time limit(15s), after 15s means play empty hands. Also if all players pass, the there should not be a time limit for the first player.
     - verify player response
     - commit changes to the game
     - jump to end game if conditions met
+    - show playing order and who is the Ace
     - repeat
 - end game
     - store winning order
@@ -29,12 +31,15 @@ In addition, the game class should also provide a public lock object for thread 
 A (singleton) class for managing all active game sessions. It is responsible for reacting to client requests as well as keeping access to a single game session object thread-safe. It should expose the following functionalities:
 - create new game session
     - requires the SignalR connections for players in the session 
+    - create players
+    - tell whether we the game can start
 - send tribute
     - requires the game session id, target player, source player, cards
 - configure game
     - collects responses from player regarding game options
         - such as AceGoPublic, PlayOneMoreRound, etc.
 - play cards
+- handle exception: OnDisconnectedAsync
 
 Note that this class is also responsible for sending notifications to players (signalr). That is, this class has dependency on the hub class that we will use for server-initiated communication.
 
@@ -47,3 +52,17 @@ An ASP.Net controller class for processing incoming HTTP requests from clients a
 
 ### ZhuoHeiChaBackend.PlayerHub
 A class that manages signalr connections to clients. Should define a list methods to be called from the backend to the clients.
+-  AskReturnTributeBackend
+-  AskAceGoPublicBackend
+-  AskForPlayBackend
+-  ReturnIsValidBackend
+    - CreateErrorMessage
+    - SendCurrentCardListBackend
+-  ShowCurrentPlayerTurnBackend
+-  NotifyOthers and update the card list
+    -  PlayerListUpdateBackend
+-  showAceIdPlayerListBackend
+-  AskPlayOneMoreRoundBackend
+-  BreakGameBackend
+-  ResetState
+
