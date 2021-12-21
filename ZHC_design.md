@@ -13,13 +13,13 @@ A class for managing a game session. Its responsibilities include:
         - wait for responses from the players
     - configure game
         - ask players about AceGoPublic
+        - show who is the Ace
 - start game
     - notify a player to play cards         
     - set a time limit(15s), after 15s means play empty hands. Also if all players pass, the there should not be a time limit for the first player.
     - verify player response
     - commit changes to the game
     - jump to end game if conditions met
-    - show playing order and who is the Ace
     - repeat
 - end game
     - store winning order
@@ -55,9 +55,8 @@ A class that manages signalr connections to clients. Should define a list method
 -  AskReturnTributeBackend
 -  AskAceGoPublicBackend
 -  AskForPlayBackend
--  ReturnIsValidBackend
-    - CreateErrorMessage
-    - SendCurrentCardListBackend
+- CreateErrorMessage
+- SendCurrentCardListBackend
 -  ShowCurrentPlayerTurnBackend
 -  NotifyOthers and update the card list
     -  PlayerListUpdateBackend
