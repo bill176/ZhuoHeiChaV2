@@ -16,9 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaFunctions", "Zhuo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaUI", "ZhuoHeiChaUI\ZhuoHeiChaUI.csproj", "{C60A96F2-5CA7-41E1-AD7C-2023818662CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZhuoHeiChaAPI", "ZhuoHeiChaAPI\ZhuoHeiChaAPI.csproj", "{51D60CE8-33CC-4B93-B665-A9E5CD678DCF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZhuoHeiChaShared", "ZhuoHeiChaShared\ZhuoHeiChaShared.csproj", "{A3B0FF75-51C7-4F43-B5E6-EBCEF84AFB2A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaAPI", "ZhuoHeiChaAPI\ZhuoHeiChaAPI.csproj", "{51D60CE8-33CC-4B93-B665-A9E5CD678DCF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,10 +48,6 @@ Global
 		{51D60CE8-33CC-4B93-B665-A9E5CD678DCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{51D60CE8-33CC-4B93-B665-A9E5CD678DCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{51D60CE8-33CC-4B93-B665-A9E5CD678DCF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A3B0FF75-51C7-4F43-B5E6-EBCEF84AFB2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A3B0FF75-51C7-4F43-B5E6-EBCEF84AFB2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A3B0FF75-51C7-4F43-B5E6-EBCEF84AFB2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A3B0FF75-51C7-4F43-B5E6-EBCEF84AFB2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
-using ZhuoHeiChaAPI.Hubs;
 using ZhuoHeiChaAPI.Services;
 using ZhuoHeiChaCore;
 
@@ -30,7 +29,6 @@ namespace ZhuoHeiChaAPI
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
                     new[] { "application/octet-stream" });
             });
-            services.AddSingleton<IPlayerHub, PlayerHub>();
             services.AddSingleton<IGameService, GameService>();
             services.AddSingleton<ICardFactory, CardFactory>();
             services.AddSingleton<ICardHelper, CardHelper>();
@@ -55,7 +53,6 @@ namespace ZhuoHeiChaAPI
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapHub<PlayerHub>("/playerhub");
             });
         }
     }
