@@ -29,5 +29,13 @@ namespace ZhuoHeiChaCore
         {
             return CardType.ToString();
         }
+
+        public static int Comparator(Card c1, Card c2)
+        {
+            if (c1.Number != c2.Number)
+                return c1.Number - c2.Number;
+
+            return c1.Suit - c2.Suit;
+        }
     }
 }
