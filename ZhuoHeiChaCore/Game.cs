@@ -10,6 +10,7 @@ namespace ZhuoHeiChaCore
         private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
         private readonly List<int> _remainingPlayers = new List<int>();
         private int _currentPlayer;
+        private int _capacity;
 
         // Key: source player id
         // Value: a dictionary with
@@ -26,10 +27,12 @@ namespace ZhuoHeiChaCore
         private readonly ICardFactory _cardFactory;
         private readonly ICardHelper _cardHelper;
 
-        public Game(ICardFactory cardFactory, ICardHelper cardHelper)
+        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
         {
             _cardFactory = cardFactory;
             _cardHelper = cardHelper;
+
+            _capacity = capacity;
         }
 
         public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
@@ -75,6 +78,21 @@ namespace ZhuoHeiChaCore
                 playerCardsDictionary = ProcessTributeBuffer();
 
             return playerCardsDictionary;
+        }
+
+        /// <summary>
+        /// Add a new player to the current game. Throws exception if max capacity reached
+        /// </summary>
+        /// <returns>Id of the newly added player</returns>
+        public int AddPlayer()
+        {
+            if (_remainingPlayers.Count >= _capacity)
+                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
+
+            var newPlayerId = _remainingPlayers.Count;
+            _remainingPlayers.Add(newPlayerId);
+
+            return newPlayerId;
         }
 
         /// <summary>
@@ -125,5 +143,6 @@ namespace ZhuoHeiChaCore
     public interface IGame
     {
         Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
+        int AddPlayer();
     }
 }

@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using ZhuoHeiChaAPI.Hubs;
 using ZhuoHeiChaAPI.Services;
 using ZhuoHeiChaCore;
+using ZhuoHeiChaCore.Factories;
 
 namespace ZhuoHeiChaAPI
 {
@@ -22,6 +24,7 @@ namespace ZhuoHeiChaAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
             services.AddSignalR();
             services.AddControllers();
             services.AddResponseCompression(opts =>
@@ -30,13 +33,23 @@ namespace ZhuoHeiChaAPI
                     new[] { "application/octet-stream" });
             });
             services.AddSingleton<IGameService, GameService>();
+            services.AddSingleton<IGameFactory, GameFactory>();
             services.AddSingleton<ICardFactory, CardFactory>();
             services.AddSingleton<ICardHelper, CardHelper>();
+            services.AddSingleton<IClientNotificationService, ClientNotificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseCors(builder =>
+            {
+                builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+            });
+
             app.UseResponseCompression();
 
             if (env.IsDevelopment())
@@ -53,6 +66,7 @@ namespace ZhuoHeiChaAPI
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<PlayerHub>("/playerhub");
             });
         }
     }

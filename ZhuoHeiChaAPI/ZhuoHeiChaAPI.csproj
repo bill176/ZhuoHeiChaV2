@@ -5,7 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ZhuoHeiChaCore\ZhuoHeiChaCore.csproj" />
+    <ProjectReference Include="..\ZhuoHeiChaDTO\ZhuoHeiChaShared.csproj" />
   </ItemGroup>
 
 

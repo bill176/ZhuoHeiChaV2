@@ -1,40 +1,84 @@
 ﻿@page "/test"
 
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager NavigationManager
 @using System.Net.Http
 @inject HttpClient Http
-@using System.Net.Http.Json
 @using System.Threading.Tasks
+@using ZhuoHeiChaShared
 
 <h1>Test</h1>
 <p>Hello! This is a test page with shortcuts for feature testing.</p>
 
 <div>
-    <h3>Room Creation</h3>
-    <label>Room Capacity:</label><input @bind="_roomCapacity" />
-    <button @onclick="CreateRoom">Create Room</button>
-    <label>The new room id is: @_roomId</label>
+    <h3>Game Creation</h3>
+    <button @onclick="CreateGame">Create a new game</button>
+    <div>
+        <label>Capacity</label>
+        <input @bind="@capacity" />
+    </div>
+    <div>
+        <label>@gameId</label>
+        <label>@errMsg</label>
+    </div>
+</div>
+
+<div>
+    <h3>Hub Connection</h3>
+    <button @onclick="ConnectToHub">Connect to hub</button>
+    <div>
+        <label>Game Id</label>
+        <input @bind="@gameId" />
+    </div>
+    <div>
+        <label>Player Id</label>
+        <label>@playerId</label>
+    </div>
 </div>
 
 @code {
-    private int _roomCapacity;
-    private string _roomId = "Haha";
+    private HubConnection _hubConnection;
+    private string playerId;
+    private int gameId;
+    private int capacity;
+    private string errMsg;
 
-    private async Task CreateRoom()
+    private async Task ConnectToHub()
+    {
+        _hubConnection = new HubConnectionBuilder().WithUrl("https://localhost:7001/playerhub").Build();
+
+        _hubConnection.On<string>(ClientHubMethods.ReceiveConnectionId, async (connectionId) =>
+        {
+            // register the connection in the backend
+            var response = await Http.PostAsJsonAsync<Player>($"api/game/{gameId}/players", new Player
+            {
+                ConnectionId = connectionId,
+                Name = "Blabla"
+            });
+            playerId = await response.Content.ReadAsStringAsync();
+            
+            Console.WriteLine($"Player # {playerId} added. Connection id: {connectionId}");
+        });
+
+        _hubConnection.On<string>(ClientHubMethods.ReceiveMessage, (message) =>
+        {
+            Console.WriteLine(message);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    private async Task CreateGame()
     {
         try
         {
-            var response = await Http.PostAsJsonAsync($"/api/room/create/{_roomCapacity}", new { });
-
-            _roomId = (await response.Content.ReadFromJsonAsync<RoomInfo>()).RoomId;
+            var response = await Http.PostAsync($"api/game?capacity={capacity}", new StringContent(string.Empty));
+            gameId = int.Parse(await response.Content.ReadAsStringAsync());
         }
         catch (Exception e)
         {
-            _roomId = "Error while creating room: " + e.Message;
+
         }
     }
 
-    private class RoomInfo
-    {
-        public string RoomId { get; set; }
-    }
 }
