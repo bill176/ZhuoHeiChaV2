@@ -31,8 +31,8 @@ namespace ZhuoHeiChaCore.Test
         {
             var f = new CardFactory();
             var h = new CardHelper(f);
-            var a = new Game(f, h);
-            a.InitGame();
+            //var a = new Game(f, h);
+            //a.InitGame();
         }
 
     }
