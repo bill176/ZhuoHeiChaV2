@@ -9,8 +9,165 @@ namespace ZhuoHeiChaCore
         private readonly List<Card> _remainingCards = new List<Card>();
         private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
         private readonly List<int> _remainingPlayers = new List<int>();
+        //private readonly List<int> _remainingPlayers = new List<int>()  {  0,1,2};
         private int _currentPlayer;
         private int _capacity;
+        private readonly List<int> _finishOrder = new List<int>();
+        //private readonly List<int> _finishOrder = new List<int>{ 0, 2, 1};
+        private readonly List<int> _blackAceList = new List<int>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        //private readonly List<int> _blackAceList = new List<int>() {1, 0, 0 };
+        private readonly List<List<int>> tributeGroups = new List<List<int>>();
+        private readonly List<(int, int)> tributePairs = new List<(int, int)>();
+
+        // return player id
+        public int addPlayer()      // controller will call this function
+        {
+            int id = _remainingPlayers.Count;
+            _remainingPlayers.Add(id);
+            return id;
+        }
+
+        // distribute cards, check tribute list, notify frontend, pay tribute
+        private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame()
+        {
+            // distribute cards
+            int numOfDecks = 1;   // TODO: need get some data from frontend ###
+            int numOfPlayers = 3;       // int numOfPlayers = _remainingPlayers.Count() ###
+
+            var cards = _cardFactory.GetFullDeckShuffled(numOfDecks);
+
+            var deckForUser = cards.Select((s, i) => new { s, i })
+                    .GroupBy(x => x.i % numOfPlayers)
+                    .Select(g => g.Select(x => x.s).ToList())
+                    .ToList();
+            for (int i = 0; i < numOfPlayers; i++)
+            {
+                _cardsInHandByPlayerId.Add(i, deckForUser[i]);
+                _cardsInHandByPlayerId[i].Sort(Card.ReverseComparator);
+
+            }
+
+            var cardsBeforeTributeByPlayerId = new Dictionary<int, IEnumerable<Card>>();
+            foreach (var playerId in _remainingPlayers)
+            {
+                var cardsBeforeTribute = _cardsInHandByPlayerId[playerId].ToList();
+                cardsBeforeTribute.Sort(Card.Comparator);
+                cardsBeforeTributeByPlayerId[playerId] = cardsBeforeTribute;
+            }
+
+            // check tribute list
+            SetTributeList();
+
+            // send tribute
+            PayTribute();
+
+            // save card list after paying tribute
+            var cardsPairByPlayerId = new Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)>();
+            foreach (var playerId in _remainingPlayers)
+            {
+                // go back to the default ascending order; this is the list of cards after tribute
+                var cardsAfterTribute = _cardsInHandByPlayerId[playerId].ToList();
+                cardsAfterTribute.Sort(Card.Comparator);
+                cardsPairByPlayerId[playerId] = (cardsBeforeTributeByPlayerId[playerId], cardsAfterTribute);
+            }
+
+            return cardsPairByPlayerId;
+        }
+
+
+        private void SetTributeList()
+        {
+            if (_finishOrder.Any(x => HasFourTwo(x)) && !HasFourTwo(_finishOrder[0]))
+                return;
+            // p p a a p [playerlist]
+            // 1 2 3 4 5
+            // (3,1) (3,2) (4,1) (4,2)
+            // foreach pair in listofpair
+            //      blackAceInfo[]
+            // 3, p   start = 2, end = 1, type = a
+            // 1, p
+            // 2, a
+            // 0, a
+            // 4, p
+
+            //{ {  3,1 }, {  2,0}, {  4} }
+
+            // p a p a p
+            int start = 0;
+            int current = 0;
+            while (current < _finishOrder.Count - 1)
+            {
+                if (_blackAceList[current] == _blackAceList[current + 1])
+                {
+                    current++;
+                }
+                else 
+                {
+                    tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
+                    start = current + 1;
+                    current = start;
+
+                }
+            }
+            tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
+
+            var tributeGroupArray = tributeGroups.ToArray();
+            for (var i = 0; i < tributeGroupArray.Length - 1; ++i)
+            {
+                var thisGroup = tributeGroupArray[i];
+                var nextGroup = tributeGroupArray[i + 1];
+
+                foreach (var receiving in thisGroup)
+                {
+                    foreach (var paying in nextGroup)
+                    {
+                        if (!HasTwoCats(paying))
+                            tributePairs.Add((paying, receiving));
+                    }
+                }
+            }
+
+        }
+
+        private bool HasFourTwo(int player_id)
+        {
+            var cardTypeList = _cardsInHandByPlayerId[player_id].Select(x => x.CardType);
+            return cardTypeList.Contains(CardType.SPADE_TWO) && cardTypeList.Contains(CardType.HEART_TWO)
+                && cardTypeList.Contains(CardType.DIAMOND_TWO) && cardTypeList.Contains(CardType.CLUBS_TWO);
+        }
+
+        private bool HasTwoCats(int player_id)
+        {
+            var cardTypeList = _cardsInHandByPlayerId[player_id].Select(x => x.CardType);
+            return cardTypeList.Contains(CardType.JOKER_SMALL) && cardTypeList.Contains(CardType.JOKER_BIG);
+        }
+
+        /// <summary>
+        /// group tributeList according to Black ACEs
+        /// call tribute in order
+        /// refer to public ace list
+        /// </summary>
+        private void PayTribute()
+        {
+
+            foreach (var (paying, receiving) in tributePairs)
+            {
+                int round = Math.Max(_blackAceList[paying], _blackAceList[receiving]);
+                for (int i = 0; i < round; i++)
+                    PayTribute(paying, receiving);
+            }
+        }
+
+
+        // exclude Black Ace for now
+        public void PayTribute(int payingPlayerId, int receivingPlayerId)
+        {
+            var tribute = _cardsInHandByPlayerId[payingPlayerId].First(x=>x.CardType != CardType.SPADE_ACE);
+
+            _cardsInHandByPlayerId[payingPlayerId].Remove(tribute);
+            _cardsInHandByPlayerId[receivingPlayerId].Add(tribute);
+            _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
+        }
 
         // Key: source player id
         // Value: a dictionary with
@@ -145,4 +302,5 @@ namespace ZhuoHeiChaCore
         Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
     }
+
 }

@@ -22,7 +22,7 @@ namespace ZhuoHeiChaCore
 
         public int Number =>
             (int)CardType >= NUM_OF_CARDS_WITHOUT_JOKERS ?
-                (int)CardType - NUM_OF_CARDS_WITHOUT_JOKERS :
+                (int)CardType:
                 (int)CardType % 13 + 3;
 
         public override string ToString()
@@ -32,10 +32,12 @@ namespace ZhuoHeiChaCore
 
         public static int Comparator(Card c1, Card c2)
         {
-            if (c1.Number != c2.Number)
-                return c1.Number - c2.Number;
+            return c1.Number - c2.Number;
+        }
 
-            return c1.Suit - c2.Suit;
+        public static int ReverseComparator(Card c1, Card c2)
+        {
+            return c2.Number - c1.Number;
         }
     }
 }
