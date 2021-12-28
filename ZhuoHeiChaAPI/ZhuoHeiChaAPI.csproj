@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ZhuoHeiChaCore\ZhuoHeiChaCore.csproj" />
-    <ProjectReference Include="..\ZhuoHeiChaDTO\ZhuoHeiChaShared.csproj" />
+    <ProjectReference Include="..\ZhuoHeiChaShared\ZhuoHeiChaShared.csproj" />
   </ItemGroup>
 
 

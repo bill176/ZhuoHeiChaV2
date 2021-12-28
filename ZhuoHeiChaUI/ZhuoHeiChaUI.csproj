@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ZhuoHeiChaDTO\ZhuoHeiChaShared.csproj" />
+    <ProjectReference Include="..\ZhuoHeiChaShared\ZhuoHeiChaShared.csproj" />
   </ItemGroup>
 
 </Project>
