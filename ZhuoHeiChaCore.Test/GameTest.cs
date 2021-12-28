@@ -24,5 +24,16 @@ namespace ZhuoHeiChaCore.Test
         {
 
         }
+
+        // extremely informal test, change the init to public then run it.
+        [Fact]
+        public void InitGame_1deck3Players_Should_get_their_random_cards()
+        {
+            var f = new CardFactory();
+            var h = new CardHelper(f);
+            var a = new Game(f, h);
+            a.InitGame();
+        }
+
     }
 }
