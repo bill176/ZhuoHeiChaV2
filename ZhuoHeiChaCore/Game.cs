@@ -11,6 +11,7 @@ namespace ZhuoHeiChaCore
         private readonly List<int> _remainingPlayers = new List<int>();
         //private readonly List<int> _remainingPlayers = new List<int>()  {  0,1,2};
         private int _currentPlayer;
+        private int _capacity;
         private readonly List<int> _finishOrder = new List<int>();
         //private readonly List<int> _finishOrder = new List<int>{ 0, 2, 1};
         private readonly List<int> _blackAceList = new List<int>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
@@ -183,10 +184,12 @@ namespace ZhuoHeiChaCore
         private readonly ICardFactory _cardFactory;
         private readonly ICardHelper _cardHelper;
 
-        public Game(ICardFactory cardFactory, ICardHelper cardHelper)
+        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
         {
             _cardFactory = cardFactory;
             _cardHelper = cardHelper;
+
+            _capacity = capacity;
         }
 
         public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
@@ -232,6 +235,21 @@ namespace ZhuoHeiChaCore
                 playerCardsDictionary = ProcessTributeBuffer();
 
             return playerCardsDictionary;
+        }
+
+        /// <summary>
+        /// Add a new player to the current game. Throws exception if max capacity reached
+        /// </summary>
+        /// <returns>Id of the newly added player</returns>
+        public int AddPlayer()
+        {
+            if (_remainingPlayers.Count >= _capacity)
+                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
+
+            var newPlayerId = _remainingPlayers.Count;
+            _remainingPlayers.Add(newPlayerId);
+
+            return newPlayerId;
         }
 
         /// <summary>
@@ -282,6 +300,7 @@ namespace ZhuoHeiChaCore
     public interface IGame
     {
         Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
+        int AddPlayer();
     }
 
 }

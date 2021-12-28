@@ -18,7 +18,7 @@ namespace ZhuoHeiChaUI
             builder.RootComponents.Add<App>("app");
 
             // TODO: refactor the IP address into config
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:7071") });
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:7000") });
 
             await builder.Build().RunAsync();
         }
