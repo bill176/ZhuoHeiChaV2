@@ -19,12 +19,27 @@ namespace ZhuoHeiChaCore
         private readonly List<List<int>> tributeGroups = new List<List<int>>();
         private readonly List<(int, int)> tributePairs = new List<(int, int)>();
 
-        // return player id
-        public int addPlayer()      // controller will call this function
+        // Key: source player id
+        // Value: a dictionary with
+        //      Key: target player id
+        //      Value: number of cards to send
+        private readonly Dictionary<int, Dictionary<int, int>> _returnTributeDependencyGraph = new Dictionary<int, Dictionary<int, int>>();
+
+        // Key: source player id
+        // Value: a dictionary with
+        //      Key: target player id
+        //      Value: list of cards to send
+        private readonly Dictionary<int, Dictionary<int, List<Card>>> _returnTributeCardsBuffer = new Dictionary<int, Dictionary<int, List<Card>>>();
+
+        private readonly ICardFactory _cardFactory;
+        private readonly ICardHelper _cardHelper;
+
+        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
         {
-            int id = _remainingPlayers.Count;
-            _remainingPlayers.Add(id);
-            return id;
+            _cardFactory = cardFactory;
+            _cardHelper = cardHelper;
+
+            _capacity = capacity;
         }
 
         // distribute cards, check tribute list, notify frontend, pay tribute
@@ -79,20 +94,7 @@ namespace ZhuoHeiChaCore
         {
             if (_finishOrder.Any(x => HasFourTwo(x)) && !HasFourTwo(_finishOrder[0]))
                 return;
-            // p p a a p [playerlist]
-            // 1 2 3 4 5
-            // (3,1) (3,2) (4,1) (4,2)
-            // foreach pair in listofpair
-            //      blackAceInfo[]
-            // 3, p   start = 2, end = 1, type = a
-            // 1, p
-            // 2, a
-            // 0, a
-            // 4, p
 
-            //{ {  3,1 }, {  2,0}, {  4} }
-
-            // p a p a p
             int start = 0;
             int current = 0;
             while (current < _finishOrder.Count - 1)
@@ -167,29 +169,6 @@ namespace ZhuoHeiChaCore
             _cardsInHandByPlayerId[payingPlayerId].Remove(tribute);
             _cardsInHandByPlayerId[receivingPlayerId].Add(tribute);
             _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
-        }
-
-        // Key: source player id
-        // Value: a dictionary with
-        //      Key: target player id
-        //      Value: number of cards to send
-        private readonly Dictionary<int, Dictionary<int, int>> _returnTributeDependencyGraph = new Dictionary<int, Dictionary<int, int>>();
-
-        // Key: source player id
-        // Value: a dictionary with
-        //      Key: target player id
-        //      Value: list of cards to send
-        private readonly Dictionary<int, Dictionary<int, List<Card>>> _returnTributeCardsBuffer = new Dictionary<int, Dictionary<int, List<Card>>>();
-
-        private readonly ICardFactory _cardFactory;
-        private readonly ICardHelper _cardHelper;
-
-        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
-        {
-            _cardFactory = cardFactory;
-            _cardHelper = cardHelper;
-
-            _capacity = capacity;
         }
 
         public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
