@@ -36,11 +36,13 @@ namespace ZhuoHeiChaCore
 
         private readonly ICardFactory _cardFactory;
         private readonly ICardHelper _cardHelper;
+        private readonly IGameHelper _gameHelper;
 
-        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
+        public Game(ICardFactory cardFactory, ICardHelper cardHelper, IGameHelper gameHelper, int capacity)
         {
             _cardFactory = cardFactory;
             _cardHelper = cardHelper;
+            _gameHelper = gameHelper;
 
             _capacity = capacity;
         }
@@ -98,29 +100,12 @@ namespace ZhuoHeiChaCore
             if (_finishOrder.Any(x => HasFourTwo(x)) && !HasFourTwo(_finishOrder[0]))
                 return;
 
-            int start = 0;
-            int current = 0;
-            while (current < _finishOrder.Count - 1)
+            tributeGroups.AddRange(_gameHelper.GroupConsecutiveElementsOfSameType(_finishOrder, idx => _blackAceList[idx]));
+            
+            for (var i = 0; i < tributeGroups.Count - 1; ++i)
             {
-                if (_blackAceList[current] == _blackAceList[current + 1])
-                {
-                    current++;
-                }
-                else
-                {
-                    tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
-                    start = current + 1;
-                    current = start;
-
-                }
-            }
-            tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
-
-            var tributeGroupArray = tributeGroups.ToArray();
-            for (var i = 0; i < tributeGroupArray.Length - 1; ++i)
-            {
-                var thisGroup = tributeGroupArray[i];
-                var nextGroup = tributeGroupArray[i + 1];
+                var thisGroup = tributeGroups[i];
+                var nextGroup = tributeGroups[i + 1];
 
                 foreach (var receiving in thisGroup)
                 {
@@ -131,7 +116,6 @@ namespace ZhuoHeiChaCore
                     }
                 }
             }
-
         }
 
         private bool HasFourTwo(int player_id)
@@ -178,7 +162,8 @@ namespace ZhuoHeiChaCore
         /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
         /// return false, iff need user to resubmit
         /// </summary>
-        public Enum PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
+        // TODO: refactor return value of this method into NotificationRequest
+        public bool PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
         {
 
             // TODO: get UserCard fron frontend, just for test in here
@@ -221,9 +206,9 @@ namespace ZhuoHeiChaCore
             _lastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
             if (CheckGameEnded())
-                return new { };
+                return false;
             
-            return new { };
+            return false;
 
 
         }
@@ -273,7 +258,7 @@ namespace ZhuoHeiChaCore
         {
             if (_remainingPlayers.All(x => _blackAceList[x] == 0))
             {
-                _didBlackAceWin = false // set who wins
+                _didBlackAceWin = false; // set who wins
                 _finishOrder.AddRange(_remainingPlayers);
                 _remainingPlayers.Clear();
                 return true;
