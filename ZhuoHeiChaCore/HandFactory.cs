@@ -6,6 +6,7 @@ namespace ZhuoHeiChaCore
 {
     public static class HandFactory
     {
+        public static Hand EMPTY_HAND = new NoCardValue(new List<Card> { }, 0);
         public static Hand CreateHand(List<Card> cards)
         {
             if (cards.Count == 0) return new NoCardValue(cards, 0);
