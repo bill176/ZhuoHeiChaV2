@@ -14,6 +14,8 @@ namespace ZhuoHeiChaCore.CardValues
         }
         public override bool CompareValue(Hand lastHand)
         {
+            if (lastHand.Group == 0)
+                return true;
             return false;
         }
     }
