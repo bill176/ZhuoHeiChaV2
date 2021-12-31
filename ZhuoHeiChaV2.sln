@@ -18,7 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaAPI", "ZhuoHeiCha
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaUI", "ZhuoHeiChaUI\ZhuoHeiChaUI.csproj", "{A4AB124C-1263-4271-A049-5903A4EFEC70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZhuoHeiChaShared", "ZhuoHeiChaShared\ZhuoHeiChaShared.csproj", "{1E7D8472-957B-4CC9-85A7-9AB5ABD2BFF7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZhuoHeiChaShared", "ZhuoHeiChaShared\ZhuoHeiChaShared.csproj", "{1E7D8472-957B-4CC9-85A7-9AB5ABD2BFF7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

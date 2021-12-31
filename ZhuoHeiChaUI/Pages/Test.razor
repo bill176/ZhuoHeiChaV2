@@ -6,6 +6,8 @@
 @inject HttpClient Http
 @using System.Threading.Tasks
 @using ZhuoHeiChaShared
+@using ZhuoHeiChaUI.Components
+@using ZhuoHeiChaUI
 
 <h1>Test</h1>
 <p>Hello! This is a test page with shortcuts for feature testing.</p>
@@ -35,6 +37,13 @@
         <label>@playerId</label>
     </div>
 </div>
+<div>
+    <h4>Interactive Playing Cards</h4>
+    <PlayingCards CardIds="@cardIds" IsInteractive="true" />
+    <h4>Non-Interactive Playing Cards</h4>
+    <PlayingCards CardIds="@cardIds" IsInteractive="false" />
+</div>
+<ButtonContainer />
 
 @code {
     private HubConnection _hubConnection;
@@ -42,6 +51,8 @@
     private int gameId;
     private int capacity;
     private string errMsg;
+
+    private List<int> cardIds = new List<int> { 25,26,27,28,29,30,51,52,53 };
 
     private async Task ConnectToHub()
     {
