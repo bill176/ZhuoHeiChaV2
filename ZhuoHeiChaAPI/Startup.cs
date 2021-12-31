@@ -34,6 +34,7 @@ namespace ZhuoHeiChaAPI
             });
             services.AddSingleton<IGameService, GameService>();
             services.AddSingleton<IGameFactory, GameFactory>();
+            services.AddSingleton<IGameHelper, GameHelper>();
             services.AddSingleton<ICardFactory, CardFactory>();
             services.AddSingleton<ICardHelper, CardHelper>();
             services.AddSingleton<IClientNotificationService, ClientNotificationService>();
