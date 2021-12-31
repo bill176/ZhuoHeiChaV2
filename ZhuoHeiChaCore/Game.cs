@@ -10,7 +10,6 @@ namespace ZhuoHeiChaCore
         private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
         private readonly List<int> _remainingPlayers = new List<int>();
         //private readonly List<int> _remainingPlayers = new List<int>()  {  0,1,2};
-        private int _currentPlayer;
         private int _capacity;
         private readonly List<int> _finishOrder = new List<int>();
         //private readonly List<int> _finishOrder = new List<int>{ 0, 2, 1};
@@ -18,6 +17,10 @@ namespace ZhuoHeiChaCore
         //private readonly List<int> _blackAceList = new List<int>() {1, 0, 0 };
         private readonly List<List<int>> tributeGroups = new List<List<int>>();
         private readonly List<(int, int)> tributePairs = new List<(int, int)>();
+        private int _lastValidPlayer;
+        private int _currentPlayer;
+        private Hand _lastValidHand = HandFactory.EMPTY_HAND;
+        private bool _didBlackAceWin = false;
 
         // Key: source player id
         // Value: a dictionary with
@@ -47,7 +50,7 @@ namespace ZhuoHeiChaCore
         {
             // distribute cards
             int numOfDecks = 1;   // TODO: need get some data from frontend ###
-            int numOfPlayers = 3;       // int numOfPlayers = _remainingPlayers.Count() ###
+            int numOfPlayers = 3;       // int numOfPlayers = _cardsInHandByPlayerId.Count() ###
 
             var cards = _cardFactory.GetFullDeckShuffled(numOfDecks);
 
@@ -103,7 +106,7 @@ namespace ZhuoHeiChaCore
                 {
                     current++;
                 }
-                else 
+                else
                 {
                     tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
                     start = current + 1;
@@ -161,15 +164,131 @@ namespace ZhuoHeiChaCore
         }
 
 
-        // exclude Black Ace for now
         public void PayTribute(int payingPlayerId, int receivingPlayerId)
         {
-            var tribute = _cardsInHandByPlayerId[payingPlayerId].First(x=>x.CardType != CardType.SPADE_ACE);
+            var tribute = _cardsInHandByPlayerId[payingPlayerId].First(x  =>  x.CardType != CardType.SPADE_ACE);
 
             _cardsInHandByPlayerId[payingPlayerId].Remove(tribute);
             _cardsInHandByPlayerId[receivingPlayerId].Add(tribute);
             _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
         }
+
+        /// <summary>
+        /// input: playerId: of whom want to play; UserCard: the cards it wants to play
+        /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
+        /// return false, iff need user to resubmit
+        /// </summary>
+        public Enum PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
+        {
+
+            // TODO: get UserCard fron frontend, just for test in here
+            //List<Card> UserCard = new List<Card> { };
+            //UserCard.Add(new Card(CardType.CLUBS_THREE));
+            //UserCard.Add(new Card(CardType.SPADE_FOUR));
+            //UserCard.Add(new Card(CardType.HEART_FIVE));
+            // TODO:
+
+            // check + throw
+
+            Hand userHand = HandFactory.EMPTY_HAND;
+            try
+            {
+                userHand = HandFactory.CreateHand(UserCard);    // throw an exception if not valid
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // dealer cannot skip
+            {
+                return true;
+            }
+
+            if (_lastValidPlayer == playerId)
+                if (userHand.Group != HandFactory.EMPTY_HAND.Group)      // dealer cannot skip
+                    _lastValidHand = HandFactory.EMPTY_HAND;
+                else
+                    return false;
+
+            if (!userHand.CompareValue(_lastValidHand))
+                return false;
+
+            foreach  (Card c in UserCard)
+                _cardsInHandByPlayerId[playerId].Remove(c);
+
+            _currentPlayer = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
+            _lastValidPlayer = playerId;
+            CheckPlayerFinished(playerId);
+            if (CheckGameEnded())
+                return new { };
+            
+            return new { };
+
+
+        }
+
+        //public class NotificationRequest
+        //{
+        //    public NotificationType Type;
+        //    public Dictionary<int, List<int>> UpdatedCards;
+        //    public string ErrorMessage;
+        //}
+
+        //public enum NotificationType
+        //{
+        //    NoAction,
+        //    PlayCard,
+        //    SendCard,
+        //    UpdateCards,
+        //    EndGame,
+        //    Error
+        //}
+
+        //NotificationRequest req = PlayCard();
+        //switch (req.Type)
+        //{
+        //    case NoAction:
+        //        break;
+        //    case PlayCard:
+        //        notificationService.NotifyPlayCard();
+        //    case UpdateCards:
+                
+        //}
+
+
+        private void CheckPlayerFinished(int playerId)
+        {
+            if (_cardsInHandByPlayerId[playerId].Count == 0) 
+            {
+                _finishOrder.Add(playerId);
+                _remainingPlayers.Remove(playerId);
+                _lastValidHand = HandFactory.EMPTY_HAND;
+                _lastValidPlayer = (_lastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
+            }
+
+        }
+
+        private bool CheckGameEnded()
+        {
+            if (_remainingPlayers.All(x => _blackAceList[x] == 0))
+            {
+                _didBlackAceWin = false // set who wins
+                _finishOrder.AddRange(_remainingPlayers);
+                _remainingPlayers.Clear();
+                return true;
+            }
+            else if (_remainingPlayers.All(x => _blackAceList[x] != 0))
+            {
+                _didBlackAceWin = true;
+                _finishOrder.AddRange(_remainingPlayers);
+                _remainingPlayers.Clear();
+                return true;
+            }
+            else
+                return false;
+        }
+
 
         public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
         {
