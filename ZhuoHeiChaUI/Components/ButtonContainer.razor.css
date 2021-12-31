@@ -1,0 +1,10 @@
+﻿.button {
+    margin: 0 30px 0 30px;
+    border-radius: 5px;
+}
+
+.default .button {
+    background: transparent;
+    font-size: 0;
+    border: none !important;
+}

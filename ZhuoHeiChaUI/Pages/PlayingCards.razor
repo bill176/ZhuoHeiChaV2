@@ -1,0 +1,143 @@
+﻿@using System.Web
+
+<div class="playingCards" style="border-style:solid;padding-top:1em">
+    <ul class="hand">
+        @if (IsInteractive)
+        {
+            // for displaying cards for current player
+            @foreach (var indexCardIdPair in GetIndexValuePairsFromList(CardIds))
+            {
+                var index = indexCardIdPair.Item1;
+                var cardId = indexCardIdPair.Item2;
+                var cardDisplayInfo = new CardDisplayInfo(cardId);
+                <li>
+                    <a class="card @(cardDisplayInfo.StyleClasses) @(_selectedCardsIndex.Contains(index) ? "selected" : string.Empty)"
+                       @onclick="() => OnCardToggled(index)">
+                        <span class="rank">@cardDisplayInfo.DisplayRank</span>
+                        <span class="suit">@cardDisplayInfo.DisplaySuit</span>
+                    </a>
+                </li>
+            }
+        }
+        else
+        {
+            // for displaying cards for other players
+            @foreach (var cardId in CardIds)
+            {
+                var cardDisplayInfo = new CardDisplayInfo(cardId);
+                <li>
+                    <span class="card @(cardDisplayInfo.StyleClasses)">
+                        <span class="rank">@cardDisplayInfo.DisplayRank</span>
+                        <span class="suit">@cardDisplayInfo.DisplaySuit</span>
+                    </span>
+                </li>
+            }
+        }
+    </ul>
+</div>
+
+
+@code {
+    [Parameter]
+    public List<int> CardIds { get; set; }
+
+    [Parameter]
+    public bool IsInteractive { get; set; }
+
+    private List<int> _selectedCardsIndex = new List<int>();
+
+    private List<(int, int)> GetIndexValuePairsFromList(List<int> values)
+    {
+        var pairs = new List<(int, int)>();
+        var idx = 0;
+        foreach (var value in values)
+        {
+            pairs.Add((idx, value));
+            idx++;
+        }
+
+        return pairs;
+    }
+
+    private void OnCardToggled(int index)
+    {
+        if (_selectedCardsIndex.Contains(index))
+            _selectedCardsIndex.Remove(index);
+        else
+            _selectedCardsIndex.Add(index);
+    }
+
+    // TODO: refactor this class
+    private class CardDisplayInfo
+    {
+        public string StyleClasses { get; set; }
+        public string DisplayRank { get; set; }
+        public string DisplaySuit { get; set; }
+
+        public CardDisplayInfo(int cardId)
+        {
+            DisplayRank = GetDisplayRankFromId(cardId);
+            DisplaySuit = GetDisplaySuitFromId(cardId);
+            StyleClasses = GetStyleClassesFromId(cardId);
+        }
+
+        private string GetDisplayRankFromId(int cardId)
+        {
+            // TODO: refactor all the constants used here
+            if (cardId >= 52) return "-";
+
+            switch(cardId % 13)
+            {
+                case 8:
+                    return "J";
+                case 9:
+                    return "Q";
+                case 10:
+                    return "K";
+                case 11:
+                    return "A";
+                case 12:
+                    return "2";
+                default:
+                    return (cardId % 13 + 3).ToString();
+            }
+        }
+
+        private string GetDisplaySuitFromId(int cardId)
+        {
+            if (cardId >= 52) return "Joker";
+            switch (cardId / 13)
+            {
+                case 0:
+                    return HttpUtility.HtmlDecode("&spades;");
+                case 1:
+                    return HttpUtility.HtmlDecode("&hearts;");
+                case 2:
+                    return HttpUtility.HtmlDecode("&diams;");
+                default:
+                    return HttpUtility.HtmlDecode("&clubs;");
+            }
+        }
+
+        private string GetStyleClassesFromId(int cardId)
+        {
+            if (cardId == 53)
+                return "joker big";
+            else if (cardId == 52)
+                return "joker little";
+
+            var classes = $"rank-{GetDisplayRankFromId(cardId).ToLower()}";
+            switch (cardId / 13)
+            {
+                case 0:
+                    return $"{classes} spades";
+                case 1:
+                    return $"{classes} hearts";
+                case 2:
+                    return $"{classes} diams";
+                default:
+                    return $"{classes} clubs";
+            }
+        }
+    }
+}
