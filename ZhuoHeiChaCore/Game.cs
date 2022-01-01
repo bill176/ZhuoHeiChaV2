@@ -6,6 +6,7 @@ namespace ZhuoHeiChaCore
 {
     public class Game : IGame
     {
+        private int _currentPlayer = 0;
         private readonly List<Card> _remainingCards = new List<Card>();
         private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
         private readonly List<int> _remainingPlayers = new List<int>();
@@ -17,8 +18,8 @@ namespace ZhuoHeiChaCore
         //private readonly List<int> _blackAceList = new List<int>() {1, 0, 0 };
         private readonly List<List<int>> tributeGroups = new List<List<int>>();
         private readonly List<(int, int)> tributePairs = new List<(int, int)>();
-        private int _lastValidPlayer;
-        private int _currentPlayer;
+
+        private int _lastValidPlayer = 0;        
         private Hand _lastValidHand = HandFactory.EMPTY_HAND;
         private bool _didBlackAceWin = false;
 
@@ -46,6 +47,22 @@ namespace ZhuoHeiChaCore
 
             _capacity = capacity;
         }
+
+        /// <summary>
+        /// Add a new player to the current game. Throws exception if max capacity reached
+        /// </summary>
+        /// <returns>Id of the newly added player</returns>
+        public int AddPlayer()
+        {
+            if (_remainingPlayers.Count >= _capacity)
+                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
+
+            var newPlayerId = _remainingPlayers.Count;
+            _remainingPlayers.Add(newPlayerId);
+
+            return newPlayerId;
+        }
+
 
         // distribute cards, check tribute list, notify frontend, pay tribute
         private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame()
@@ -157,125 +174,8 @@ namespace ZhuoHeiChaCore
             _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
         }
 
-        /// <summary>
-        /// input: playerId: of whom want to play; UserCard: the cards it wants to play
-        /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
-        /// return false, iff need user to resubmit
-        /// </summary>
-        // TODO: refactor return value of this method into NotificationRequest
-        public bool PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
-        {
 
-            // TODO: get UserCard fron frontend, just for test in here
-            //List<Card> UserCard = new List<Card> { };
-            //UserCard.Add(new Card(CardType.CLUBS_THREE));
-            //UserCard.Add(new Card(CardType.SPADE_FOUR));
-            //UserCard.Add(new Card(CardType.HEART_FIVE));
-            // TODO:
-
-            // check + throw
-
-            Hand userHand = HandFactory.EMPTY_HAND;
-            try
-            {
-                userHand = HandFactory.CreateHand(UserCard);    // throw an exception if not valid
-            }
-            catch
-            {
-                return false;
-            }
-
-            if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // dealer cannot skip
-            {
-                return true;
-            }
-
-            if (_lastValidPlayer == playerId)
-                if (userHand.Group != HandFactory.EMPTY_HAND.Group)      // dealer cannot skip
-                    _lastValidHand = HandFactory.EMPTY_HAND;
-                else
-                    return false;
-
-            if (!userHand.CompareValue(_lastValidHand))
-                return false;
-
-            foreach  (Card c in UserCard)
-                _cardsInHandByPlayerId[playerId].Remove(c);
-
-            _currentPlayer = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
-            _lastValidPlayer = playerId;
-            CheckPlayerFinished(playerId);
-            if (CheckGameEnded())
-                return false;
-            
-            return false;
-
-
-        }
-
-        //public class NotificationRequest
-        //{
-        //    public NotificationType Type;
-        //    public Dictionary<int, List<int>> UpdatedCards;
-        //    public string ErrorMessage;
-        //}
-
-        //public enum NotificationType
-        //{
-        //    NoAction,
-        //    PlayCard,
-        //    SendCard,
-        //    UpdateCards,
-        //    EndGame,
-        //    Error
-        //}
-
-        //NotificationRequest req = PlayCard();
-        //switch (req.Type)
-        //{
-        //    case NoAction:
-        //        break;
-        //    case PlayCard:
-        //        notificationService.NotifyPlayCard();
-        //    case UpdateCards:
-                
-        //}
-
-
-        private void CheckPlayerFinished(int playerId)
-        {
-            if (_cardsInHandByPlayerId[playerId].Count == 0) 
-            {
-                _finishOrder.Add(playerId);
-                _remainingPlayers.Remove(playerId);
-                _lastValidHand = HandFactory.EMPTY_HAND;
-                _lastValidPlayer = (_lastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
-            }
-
-        }
-
-        private bool CheckGameEnded()
-        {
-            if (_remainingPlayers.All(x => _blackAceList[x] == 0))
-            {
-                _didBlackAceWin = false; // set who wins
-                _finishOrder.AddRange(_remainingPlayers);
-                _remainingPlayers.Clear();
-                return true;
-            }
-            else if (_remainingPlayers.All(x => _blackAceList[x] != 0))
-            {
-                _didBlackAceWin = true;
-                _finishOrder.AddRange(_remainingPlayers);
-                _remainingPlayers.Clear();
-                return true;
-            }
-            else
-                return false;
-        }
-
-
-        public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
+        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
         {
             var cardList = cards.ToList();
 
@@ -321,21 +221,6 @@ namespace ZhuoHeiChaCore
         }
 
         /// <summary>
-        /// Add a new player to the current game. Throws exception if max capacity reached
-        /// </summary>
-        /// <returns>Id of the newly added player</returns>
-        public int AddPlayer()
-        {
-            if (_remainingPlayers.Count >= _capacity)
-                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
-
-            var newPlayerId = _remainingPlayers.Count;
-            _remainingPlayers.Add(newPlayerId);
-
-            return newPlayerId;
-        }
-
-        /// <summary>
         /// Check if all of cards belong to the player
         /// </summary>
         /// <param name="playerId"></param>
@@ -378,11 +263,169 @@ namespace ZhuoHeiChaCore
 
             return playerCardsDictionary;
         }
+
+        /// <summary>
+        /// input: playerId: of whom want to play; UserCard: the cards it wants to play
+        /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
+        /// return false, iff need user to resubmit
+        /// </summary>
+        public NotificationRequest PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
+        {
+            int possible_next_player = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
+
+            if(_currentPlayer != playerId)
+            {
+                throw new ArgumentException($"Player {playerId} cannot play hand now, because he/she is not the current player!");
+            }
+
+            Hand userHand = HandFactory.EMPTY_HAND;
+            try
+            {
+                userHand = HandFactory.CreateHand(UserCard);    // throw an exception if not valid
+            }
+            catch
+            {
+                return new NotificationRequest(NotificationType.Resubmit, " Hand is not valid ");
+            }
+
+            if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // dealer cannot skip
+            {
+                // change current player to the next one.
+                while (!_remainingPlayers.Contains(possible_next_player))
+                {
+                    possible_next_player = (possible_next_player + 1) % _cardsInHandByPlayerId.Count;
+                }
+                _currentPlayer = possible_next_player;
+
+                return new NotificationRequest(NotificationType.PlayHandSuccess);
+            }
+
+            if (_lastValidPlayer == playerId)
+                if (userHand.Group == HandFactory.EMPTY_HAND.Group)      // dealer cannot skip
+                    return new NotificationRequest(NotificationType.Resubmit, " dealer cannot skip ");
+                else
+                { 
+                    _lastValidHand = HandFactory.EMPTY_HAND;
+                }
+
+            if (!userHand.CompareValue(_lastValidHand))
+                return new NotificationRequest(NotificationType.Resubmit, " your hand is smaller then the last hand ");
+
+            foreach (Card c in UserCard)
+                _cardsInHandByPlayerId[playerId].Remove(c);
+
+            // change current player to the next one.
+            while (!_remainingPlayers.Contains(possible_next_player))
+            {
+                possible_next_player = (possible_next_player + 1) % _cardsInHandByPlayerId.Count;
+            }
+            _currentPlayer = possible_next_player;
+
+            _lastValidPlayer = playerId;
+            CheckPlayerFinished(playerId);
+            if (CheckGameEnded())
+                return new NotificationRequest(NotificationType.GameEnded);
+
+            return new NotificationRequest(NotificationType.PlayHandSuccess, UserCard);     // sen back the update cards
+
+
+        }
+
+        public class NotificationRequest
+        {
+            public NotificationType Type;
+            public List<Card> UpdatedCards = null;
+            public string ErrorMessage = "";
+
+            public NotificationRequest()
+            {
+                this.Type = NotificationType.NoAction;
+            }
+
+            public NotificationRequest(NotificationType Type)
+            {
+                this.Type = Type;
+            }
+
+            public NotificationRequest(NotificationType Type, List<Card> UpdatedCards)
+            {
+                this.Type = Type;
+                this.UpdatedCards = UpdatedCards;
+            }
+
+            public NotificationRequest(NotificationType Type, string ErrorMessage)
+            {
+                this.Type = Type;
+                this.ErrorMessage = ErrorMessage;
+            }
+        }
+
+        public enum NotificationType
+        {
+            NoAction,
+            Resubmit,
+            PlayHandSuccess,
+            GameEnded,
+            Error
+        }
+
+        //NotificationRequest req = PlayCard();
+        //switch (req.Type)
+        //{
+        //    case NoAction:
+        //        break;
+        //    case PlayCard:
+        //        notificationService.NotifyPlayCard();
+        //    case UpdateCards:
+
+        //}
+
+
+        private void CheckPlayerFinished(int playerId)
+        {
+            if (_cardsInHandByPlayerId[playerId].Count == 0) 
+            {
+                _finishOrder.Add(playerId);
+                _remainingPlayers.Remove(playerId);
+                _lastValidHand = HandFactory.EMPTY_HAND;
+                // change next valid player to the next one.
+                int possible_next_valid_player = (_lastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
+                while (!_remainingPlayers.Contains(possible_next_valid_player))
+                {
+                    possible_next_valid_player = (possible_next_valid_player + 1) % _cardsInHandByPlayerId.Count;
+                }
+                _lastValidPlayer = possible_next_valid_player;
+            }
+
+        }
+
+        private bool CheckGameEnded()
+        {
+            if (_remainingPlayers.All(x => _blackAceList[x] == 0))
+            {
+                _didBlackAceWin = false; // set who wins
+                _finishOrder.AddRange(_remainingPlayers);
+                _remainingPlayers.Clear();
+                return true;
+            }
+            else if (_remainingPlayers.All(x => _blackAceList[x] != 0))
+            {
+                _didBlackAceWin = true;
+                _finishOrder.AddRange(_remainingPlayers);
+                _remainingPlayers.Clear();
+                return true;
+            }
+            else
+                return false;
+        }
+
+
+        
     }
 
     public interface IGame
     {
-        Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
+        Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
     }
 

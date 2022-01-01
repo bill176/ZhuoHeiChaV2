@@ -82,7 +82,7 @@ namespace ZhuoHeiChaAPI.Services
             {
                 try
                 {
-                    updatedPlayerCards = game.SendCards(sourcePlayerId, targetPlayerId, cards);
+                    updatedPlayerCards = game.ReturnTribute(sourcePlayerId, targetPlayerId, cards);
                 }
                 catch (Exception e)
                 {
