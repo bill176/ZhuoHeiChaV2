@@ -37,11 +37,13 @@ namespace ZhuoHeiChaCore
 
         private readonly ICardFactory _cardFactory;
         private readonly ICardHelper _cardHelper;
+        private readonly IGameHelper _gameHelper;
 
-        public Game(ICardFactory cardFactory, ICardHelper cardHelper, int capacity)
+        public Game(ICardFactory cardFactory, ICardHelper cardHelper, IGameHelper gameHelper, int capacity)
         {
             _cardFactory = cardFactory;
             _cardHelper = cardHelper;
+            _gameHelper = gameHelper;
 
             _capacity = capacity;
         }
@@ -115,29 +117,12 @@ namespace ZhuoHeiChaCore
             if (_finishOrder.Any(x => HasFourTwo(x)) && !HasFourTwo(_finishOrder[0]))
                 return;
 
-            int start = 0;
-            int current = 0;
-            while (current < _finishOrder.Count - 1)
+            tributeGroups.AddRange(_gameHelper.GroupConsecutiveElementsOfSameType(_finishOrder, idx => _blackAceList[idx]));
+            
+            for (var i = 0; i < tributeGroups.Count - 1; ++i)
             {
-                if (_blackAceList[current] == _blackAceList[current + 1])
-                {
-                    current++;
-                }
-                else
-                {
-                    tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
-                    start = current + 1;
-                    current = start;
-
-                }
-            }
-            tributeGroups.Add(Enumerable.Range(start, current - start + 1).Select(idx => _finishOrder[idx]).ToList());
-
-            var tributeGroupArray = tributeGroups.ToArray();
-            for (var i = 0; i < tributeGroupArray.Length - 1; ++i)
-            {
-                var thisGroup = tributeGroupArray[i];
-                var nextGroup = tributeGroupArray[i + 1];
+                var thisGroup = tributeGroups[i];
+                var nextGroup = tributeGroups[i + 1];
 
                 foreach (var receiving in thisGroup)
                 {
@@ -148,7 +133,6 @@ namespace ZhuoHeiChaCore
                     }
                 }
             }
-
         }
 
         private bool HasFourTwo(int player_id)
@@ -236,6 +220,20 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
+        /// <summary>
+        /// Add a new player to the current game. Throws exception if max capacity reached
+        /// </summary>
+        /// <returns>Id of the newly added player</returns>
+        public int AddPlayer()
+        {
+            if (_remainingPlayers.Count >= _capacity)
+                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
+
+            var newPlayerId = _remainingPlayers.Count;
+            _remainingPlayers.Add(newPlayerId);
+
+            return newPlayerId;
+        }
 
         /// <summary>
         /// Check if all of cards belong to the player

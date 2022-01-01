@@ -1,0 +1,13 @@
+﻿@page "/gameinfo/{gameId:int}"
+
+<h3>Game Info</h3>
+
+@code {
+    [Parameter]
+    public int GameId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine(GameId);
+    }
+}

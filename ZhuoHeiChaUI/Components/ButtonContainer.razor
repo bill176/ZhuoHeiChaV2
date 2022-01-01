@@ -1,0 +1,66 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+
+<h3>ButtonRegion</h3>
+<div>
+    @switch (clientState)
+    {
+        case ClientState.Playing:
+            <button type="button" class="button" name="playCard" @onclick="OnPlayCardButtonClicked">
+                出牌!
+            </button>
+            <button type="button" class="button" name="skip" @onclick="OnSkipButtonClicked">
+                跳过
+            </button>
+            break;
+        case ClientState.SendingTribute:
+            <button type="button" class="button" name="sendTribute">
+                确认
+            </button>
+            break;
+        case ClientState.AceGoingPublic:
+            <button type="button" class="button" name="aceGoPublic">
+                亮黑叉
+            </button>
+            <button type="button" class="button" name="aceStayPrivate">
+                不亮
+            </button>
+            break;
+        case ClientState.AskingAnotherRound:
+            <div class="another-round">
+                <button type="button" class="button" name="playAnotherRound">
+                    再来!
+                </button>
+            </div>
+            break;
+        default:
+            break;
+    }
+</div>
+
+
+@code {
+    private ClientState clientState;
+
+    public void RegisterNotificationHandlers(HubConnection hubConnection)
+    {
+        //hubConnection.On()
+    }
+
+    private enum ClientState
+    {
+        Playing,
+        SendingTribute,
+        AceGoingPublic,
+        AskingAnotherRound
+    }
+
+    private void OnPlayCardButtonClicked()
+    {
+
+    }
+
+    private void OnSkipButtonClicked()
+    {
+
+    }
+}
