@@ -221,21 +221,6 @@ namespace ZhuoHeiChaCore
         }
 
         /// <summary>
-        /// Add a new player to the current game. Throws exception if max capacity reached
-        /// </summary>
-        /// <returns>Id of the newly added player</returns>
-        public int AddPlayer()
-        {
-            if (_remainingPlayers.Count >= _capacity)
-                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
-
-            var newPlayerId = _remainingPlayers.Count;
-            _remainingPlayers.Add(newPlayerId);
-
-            return newPlayerId;
-        }
-
-        /// <summary>
         /// Check if all of cards belong to the player
         /// </summary>
         /// <param name="playerId"></param>
