@@ -14,10 +14,9 @@ namespace ZhuoHeiChaCore
         private int _capacity;
         private readonly List<int> _finishOrder = new List<int>();
         //private readonly List<int> _finishOrder = new List<int>{ 0, 2, 1};
-        private readonly List<int> _blackAceList = new List<int>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        private readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
         //private readonly List<int> _blackAceList = new List<int>() {1, 0, 0 };
-        private readonly List<List<int>> tributeGroups = new List<List<int>>();
-        private readonly List<(int, int)> tributePairs = new List<(int, int)>();
+        private readonly List<(int, int)> _tributePairs = new List<(int, int)>();
 
         private int _lastValidPlayer = 0;        
         private Hand _lastValidHand = HandFactory.EMPTY_HAND;
@@ -29,11 +28,8 @@ namespace ZhuoHeiChaCore
         //      Value: number of cards to send
         private readonly Dictionary<int, Dictionary<int, int>> _returnTributeDependencyGraph = new Dictionary<int, Dictionary<int, int>>();
 
-        // Key: source player id
-        // Value: a dictionary with
-        //      Key: target player id
-        //      Value: list of cards to send
-        private readonly Dictionary<int, Dictionary<int, List<Card>>> _returnTributeCardsBuffer = new Dictionary<int, Dictionary<int, List<Card>>>();
+        // ((payer, receiver), list of cards)
+        private readonly List<((int, int), List<Card>)> _returnTributeCardsBuffer = new List<((int, int), List<Card>)>();
 
         private readonly ICardFactory _cardFactory;
         private readonly ICardHelper _cardHelper;
@@ -92,8 +88,14 @@ namespace ZhuoHeiChaCore
                 cardsBeforeTributeByPlayerId[playerId] = cardsBeforeTribute;
             }
 
-            // check tribute list
-            SetTributeList();
+            // generate tribute list
+            var tributePairs = GetTributePairs();
+            _tributePairs.Clear();
+            _tributePairs.AddRange(tributePairs);
+
+            _finishOrder.Clear();
+            // TODO: initialize this list based on cards in hand
+            _playerTypeList.Clear();
 
             // send tribute
             PayTribute();
@@ -111,41 +113,16 @@ namespace ZhuoHeiChaCore
             return cardsPairByPlayerId;
         }
 
-
-        private void SetTributeList()
+        private IEnumerable<(int, int)> GetTributePairs()
         {
-            if (_finishOrder.Any(x => HasFourTwo(x)) && !HasFourTwo(_finishOrder[0]))
-                return;
+            if (_finishOrder.Any(x => _gameHelper.HasFourTwo(_cardsInHandByPlayerId[x]))
+                && !_gameHelper.HasFourTwo(_cardsInHandByPlayerId[_finishOrder[0]]))
+                return Enumerable.Empty<(int, int)>();
 
-            tributeGroups.AddRange(_gameHelper.GroupConsecutiveElementsOfSameType(_finishOrder, idx => _blackAceList[idx]));
-            
-            for (var i = 0; i < tributeGroups.Count - 1; ++i)
-            {
-                var thisGroup = tributeGroups[i];
-                var nextGroup = tributeGroups[i + 1];
+            var finishGroupsSequence = _gameHelper.GroupConsecutivePlayersOfSameType(_finishOrder, idx => _playerTypeList[idx]);
+            var payerReceiverPairs = _gameHelper.GeneratePayerReceiverPairsForConsecutiveGroups(finishGroupsSequence);
 
-                foreach (var receiving in thisGroup)
-                {
-                    foreach (var paying in nextGroup)
-                    {
-                        if (!HasTwoCats(paying))
-                            tributePairs.Add((paying, receiving));
-                    }
-                }
-            }
-        }
-
-        private bool HasFourTwo(int player_id)
-        {
-            var cardTypeList = _cardsInHandByPlayerId[player_id].Select(x => x.CardType);
-            return cardTypeList.Contains(CardType.SPADE_TWO) && cardTypeList.Contains(CardType.HEART_TWO)
-                && cardTypeList.Contains(CardType.DIAMOND_TWO) && cardTypeList.Contains(CardType.CLUBS_TWO);
-        }
-
-        private bool HasTwoCats(int player_id)
-        {
-            var cardTypeList = _cardsInHandByPlayerId[player_id].Select(x => x.CardType);
-            return cardTypeList.Contains(CardType.JOKER_SMALL) && cardTypeList.Contains(CardType.JOKER_BIG);
+            return payerReceiverPairs.Where(pair => !_gameHelper.HasTwoCats(_cardsInHandByPlayerId[pair.payer]));
         }
 
         /// <summary>
@@ -155,13 +132,17 @@ namespace ZhuoHeiChaCore
         /// </summary>
         private void PayTribute()
         {
-
-            foreach (var (paying, receiving) in tributePairs)
+            foreach (var (paying, receiving) in _tributePairs)
             {
-                int round = Math.Max(_blackAceList[paying], _blackAceList[receiving]);
-                for (int i = 0; i < round; i++)
+                var numOfTributeCards = GetNumOfTributeCards(paying, receiving);
+                for (int i = 0; i < numOfTributeCards; i++)
                     PayTribute(paying, receiving);
             }
+        }
+
+        private int GetNumOfTributeCards(int payer, int receiver)
+        {
+            return Math.Max((int)_playerTypeList[payer], (int)_playerTypeList[receiver]);
         }
 
 
@@ -180,8 +161,8 @@ namespace ZhuoHeiChaCore
             var cardList = cards.ToList();
 
             // check if both ids are valid
-            if (!_returnTributeDependencyGraph.TryGetValue(sourcePlayerId, out var receivingPlayers)
-                || !receivingPlayers.TryGetValue(targetPlayerId, out var numOfCardsToSend))
+            var pairIndex = _tributePairs.FindIndex(p => p.Item1 == sourcePlayerId && p.Item2 == targetPlayerId);
+            if (pairIndex == -1)
                 throw new ArgumentException($"Player {sourcePlayerId} cannot send cards to player {targetPlayerId}!");
 
             // check if sourcePlayer has the cards
@@ -190,31 +171,20 @@ namespace ZhuoHeiChaCore
                     $"{_cardHelper.ConvertCardsToString(cardList)}");
 
             // check if number of cards to be sent is correct
+            var numOfCardsToSend = GetNumOfTributeCards(sourcePlayerId, targetPlayerId);
             if (cardList.Count != numOfCardsToSend)
                 throw new ArgumentException($"Player {sourcePlayerId} is trying to send {cardList.Count} cards to " +
                     $"{targetPlayerId}. Expecting {numOfCardsToSend} cards.");
 
             // store the returned cards to the buffer
-            if (!_returnTributeCardsBuffer.TryGetValue(sourcePlayerId, out var tributeCardsByTargetPlayerId))
-            {
-                _returnTributeCardsBuffer[sourcePlayerId] = new Dictionary<int, List<Card>>
-                {
-                    { targetPlayerId, cardList }
-                };
-            }
-            else
-            {
-                tributeCardsByTargetPlayerId[targetPlayerId] = cardList;
-            }
+            _returnTributeCardsBuffer.Add(((_tributePairs[pairIndex].Item1, _tributePairs[pairIndex].Item2), cardList));
 
             // remove the dependency to avoid duplication
-            _returnTributeDependencyGraph[sourcePlayerId].Remove(targetPlayerId);
-            if (_returnTributeDependencyGraph[sourcePlayerId].Count == 0)
-                _returnTributeDependencyGraph.Remove(sourcePlayerId);
+            _tributePairs.RemoveAt(pairIndex);
 
             // process the buffer if all tributes have been sent
             var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
-            if (_returnTributeDependencyGraph.Count == 0)
+            if (_tributePairs.Count == 0)
                 playerCardsDictionary = ProcessTributeBuffer();
 
             return playerCardsDictionary;
@@ -237,25 +207,19 @@ namespace ZhuoHeiChaCore
         /// as their updated cards</returns>
         private Dictionary<int, IEnumerable<Card>> ProcessTributeBuffer()
         {
-            var playersWithModifiedCards = new HashSet<int>();
-            foreach (var srcPlayerId in _returnTributeCardsBuffer.Keys)
+            foreach (var ((payer, receiver), cards) in _returnTributeCardsBuffer)
             {
-                playersWithModifiedCards.Add(srcPlayerId);
-                foreach (var tgtPlayerId in _returnTributeCardsBuffer[srcPlayerId].Keys)
+                foreach (var card in cards)
                 {
-                    playersWithModifiedCards.Add(tgtPlayerId);
-                    foreach (var card in _returnTributeCardsBuffer[srcPlayerId][tgtPlayerId])
-                    {
-                        _cardsInHandByPlayerId[srcPlayerId].Remove(card);
-                        _cardsInHandByPlayerId[tgtPlayerId].Add(card);
-                    }
+                    _cardsInHandByPlayerId[payer].Remove(card);
+                    _cardsInHandByPlayerId[receiver].Add(card);
                 }
             }
 
             var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
 
             // TODO: only sort players with added cards
-            foreach (var player in playersWithModifiedCards)
+            foreach (var player in _remainingPlayers)
             {
                 _cardsInHandByPlayerId[player].Sort(Card.Comparator);
                 playerCardsDictionary[player] = _cardsInHandByPlayerId[player];
@@ -269,7 +233,7 @@ namespace ZhuoHeiChaCore
         /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
         /// return false, iff need user to resubmit
         /// </summary>
-        public NotificationRequest PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
+        public GameActionResult PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
         {
             int possible_next_player = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
 
@@ -285,7 +249,7 @@ namespace ZhuoHeiChaCore
             }
             catch
             {
-                return new NotificationRequest(NotificationType.Resubmit, " Hand is not valid ");
+                return new GameActionResult(GameReturnType.Resubmit, " Hand is not valid ");
             }
 
             if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // dealer cannot skip
@@ -297,19 +261,19 @@ namespace ZhuoHeiChaCore
                 }
                 _currentPlayer = possible_next_player;
 
-                return new NotificationRequest(NotificationType.PlayHandSuccess);
+                return new GameActionResult(GameReturnType.PlayHandSuccess);
             }
 
             if (_lastValidPlayer == playerId)
                 if (userHand.Group == HandFactory.EMPTY_HAND.Group)      // dealer cannot skip
-                    return new NotificationRequest(NotificationType.Resubmit, " dealer cannot skip ");
+                    return new GameActionResult(GameReturnType.Resubmit, " dealer cannot skip ");
                 else
                 { 
                     _lastValidHand = HandFactory.EMPTY_HAND;
                 }
 
             if (!userHand.CompareValue(_lastValidHand))
-                return new NotificationRequest(NotificationType.Resubmit, " your hand is smaller then the last hand ");
+                return new GameActionResult(GameReturnType.Resubmit, " your hand is smaller then the last hand ");
 
             foreach (Card c in UserCard)
                 _cardsInHandByPlayerId[playerId].Remove(c);
@@ -324,62 +288,11 @@ namespace ZhuoHeiChaCore
             _lastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
             if (CheckGameEnded())
-                return new NotificationRequest(NotificationType.GameEnded);
+                return new GameActionResult(GameReturnType.GameEnded);
 
-            return new NotificationRequest(NotificationType.PlayHandSuccess, UserCard);     // sen back the update cards
-
-
+            // TODO: update UserCard to be the remaining cards of the player
+            return new GameActionResult(GameReturnType.PlayHandSuccess, UserCard, _currentPlayer);     // send back the update cards
         }
-
-        public class NotificationRequest
-        {
-            public NotificationType Type;
-            public List<Card> UpdatedCards = null;
-            public string ErrorMessage = "";
-
-            public NotificationRequest()
-            {
-                this.Type = NotificationType.NoAction;
-            }
-
-            public NotificationRequest(NotificationType Type)
-            {
-                this.Type = Type;
-            }
-
-            public NotificationRequest(NotificationType Type, List<Card> UpdatedCards)
-            {
-                this.Type = Type;
-                this.UpdatedCards = UpdatedCards;
-            }
-
-            public NotificationRequest(NotificationType Type, string ErrorMessage)
-            {
-                this.Type = Type;
-                this.ErrorMessage = ErrorMessage;
-            }
-        }
-
-        public enum NotificationType
-        {
-            NoAction,
-            Resubmit,
-            PlayHandSuccess,
-            GameEnded,
-            Error
-        }
-
-        //NotificationRequest req = PlayCard();
-        //switch (req.Type)
-        //{
-        //    case NoAction:
-        //        break;
-        //    case PlayCard:
-        //        notificationService.NotifyPlayCard();
-        //    case UpdateCards:
-
-        //}
-
 
         private void CheckPlayerFinished(int playerId)
         {
@@ -401,14 +314,14 @@ namespace ZhuoHeiChaCore
 
         private bool CheckGameEnded()
         {
-            if (_remainingPlayers.All(x => _blackAceList[x] == 0))
+            if (_remainingPlayers.All(x => _playerTypeList[x] == PlayerType.Normal))
             {
                 _didBlackAceWin = false; // set who wins
                 _finishOrder.AddRange(_remainingPlayers);
                 _remainingPlayers.Clear();
                 return true;
             }
-            else if (_remainingPlayers.All(x => _blackAceList[x] != 0))
+            else if (_remainingPlayers.All(x => _playerTypeList[x] != PlayerType.Normal))
             {
                 _didBlackAceWin = true;
                 _finishOrder.AddRange(_remainingPlayers);
@@ -418,9 +331,6 @@ namespace ZhuoHeiChaCore
             else
                 return false;
         }
-
-
-        
     }
 
     public interface IGame
@@ -429,4 +339,10 @@ namespace ZhuoHeiChaCore
         int AddPlayer();
     }
 
+    public enum PlayerType
+    {
+        Normal,
+        Ace,
+        PublicAce
+    }
 }

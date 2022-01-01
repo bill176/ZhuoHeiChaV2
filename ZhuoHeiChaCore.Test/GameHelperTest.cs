@@ -14,8 +14,8 @@ namespace ZhuoHeiChaCore.Test
             var gameHelper = new GameHelper();
 
             // selector always return the same type
-            var group1 = gameHelper.GroupConsecutiveElementsOfSameType(new List<int> { 1, 2, 3 }, idx => 1);
-            var group2 = gameHelper.GroupConsecutiveElementsOfSameType(new List<int> { 1, 4, 9 }, idx => 2);
+            var group1 = gameHelper.GroupConsecutivePlayersOfSameType(new List<int> { 1, 2, 3 }, idx => PlayerType.Ace);
+            var group2 = gameHelper.GroupConsecutivePlayersOfSameType(new List<int> { 1, 4, 9 }, idx => PlayerType.PublicAce);
 
             Assert.Single(group1);
             Assert.Single(group2);
@@ -26,9 +26,9 @@ namespace ZhuoHeiChaCore.Test
         {
             var gameHelper = new GameHelper();
 
-            var valueList = new List<int> { 1, 2, 3, 4, 5 };
-            var group1 = gameHelper.GroupConsecutiveElementsOfSameType(valueList, idx => idx % 2);
-            var group2 = gameHelper.GroupConsecutiveElementsOfSameType(valueList, idx => idx);
+            var valueList = new List<int> { 1, 2, 3 };
+            var group1 = gameHelper.GroupConsecutivePlayersOfSameType(valueList, idx => (PlayerType)(idx % 2));
+            var group2 = gameHelper.GroupConsecutivePlayersOfSameType(valueList, idx => (PlayerType)idx);
 
             Assert.Equal(valueList.Count, group1.Count);
             Assert.Equal(valueList.Count, group2.Count);
@@ -40,7 +40,7 @@ namespace ZhuoHeiChaCore.Test
         {
             var gameHelper = new GameHelper();
 
-            var groups = gameHelper.GroupConsecutiveElementsOfSameType(valueList, x=>valueList[x]);
+            var groups = gameHelper.GroupConsecutivePlayersOfSameType(valueList, x=>(PlayerType)valueList[x]);
 
             Assert.Equal(expectedGroups.Count, groups.Count);
             for (var i = 0; i < expectedGroups.Count; ++i)
