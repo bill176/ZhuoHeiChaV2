@@ -19,7 +19,7 @@ namespace ZhuoHeiChaCore
         private readonly List<List<int>> tributeGroups = new List<List<int>>();
         private readonly List<(int, int)> tributePairs = new List<(int, int)>();
 
-        private int _lastValidPlayer;        
+        private int _lastValidPlayer = 0;        
         private Hand _lastValidHand = HandFactory.EMPTY_HAND;
         private bool _didBlackAceWin = false;
 
@@ -45,6 +45,22 @@ namespace ZhuoHeiChaCore
 
             _capacity = capacity;
         }
+
+        /// <summary>
+        /// Add a new player to the current game. Throws exception if max capacity reached
+        /// </summary>
+        /// <returns>Id of the newly added player</returns>
+        public int AddPlayer()
+        {
+            if (_remainingPlayers.Count >= _capacity)
+                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
+
+            var newPlayerId = _remainingPlayers.Count;
+            _remainingPlayers.Add(newPlayerId);
+
+            return newPlayerId;
+        }
+
 
         // distribute cards, check tribute list, notify frontend, pay tribute
         private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame()
@@ -174,6 +190,97 @@ namespace ZhuoHeiChaCore
             _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
         }
 
+
+        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
+        {
+            var cardList = cards.ToList();
+
+            // check if both ids are valid
+            if (!_returnTributeDependencyGraph.TryGetValue(sourcePlayerId, out var receivingPlayers)
+                || !receivingPlayers.TryGetValue(targetPlayerId, out var numOfCardsToSend))
+                throw new ArgumentException($"Player {sourcePlayerId} cannot send cards to player {targetPlayerId}!");
+
+            // check if sourcePlayer has the cards
+            if (!PlayerHasCards(sourcePlayerId, cardList))
+                throw new ArgumentException($"Player {sourcePlayerId} doesn't have all of the following cards: " +
+                    $"{_cardHelper.ConvertCardsToString(cardList)}");
+
+            // check if number of cards to be sent is correct
+            if (cardList.Count != numOfCardsToSend)
+                throw new ArgumentException($"Player {sourcePlayerId} is trying to send {cardList.Count} cards to " +
+                    $"{targetPlayerId}. Expecting {numOfCardsToSend} cards.");
+
+            // store the returned cards to the buffer
+            if (!_returnTributeCardsBuffer.TryGetValue(sourcePlayerId, out var tributeCardsByTargetPlayerId))
+            {
+                _returnTributeCardsBuffer[sourcePlayerId] = new Dictionary<int, List<Card>>
+                {
+                    { targetPlayerId, cardList }
+                };
+            }
+            else
+            {
+                tributeCardsByTargetPlayerId[targetPlayerId] = cardList;
+            }
+
+            // remove the dependency to avoid duplication
+            _returnTributeDependencyGraph[sourcePlayerId].Remove(targetPlayerId);
+            if (_returnTributeDependencyGraph[sourcePlayerId].Count == 0)
+                _returnTributeDependencyGraph.Remove(sourcePlayerId);
+
+            // process the buffer if all tributes have been sent
+            var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
+            if (_returnTributeDependencyGraph.Count == 0)
+                playerCardsDictionary = ProcessTributeBuffer();
+
+            return playerCardsDictionary;
+        }
+
+
+        /// <summary>
+        /// Check if all of cards belong to the player
+        /// </summary>
+        /// <param name="playerId"></param>
+        /// <param name="cards"></param>
+        private bool PlayerHasCards(int playerId, IEnumerable<Card> cards)
+        {
+            return cards.All(card => _cardsInHandByPlayerId[playerId].Contains(card));
+        }
+
+        /// <summary>
+        /// Commits the tribute card changes previously stored in the buffer
+        /// </summary>
+        /// <returns>A dictionary containing the list of players whose cards changed as well 
+        /// as their updated cards</returns>
+        private Dictionary<int, IEnumerable<Card>> ProcessTributeBuffer()
+        {
+            var playersWithModifiedCards = new HashSet<int>();
+            foreach (var srcPlayerId in _returnTributeCardsBuffer.Keys)
+            {
+                playersWithModifiedCards.Add(srcPlayerId);
+                foreach (var tgtPlayerId in _returnTributeCardsBuffer[srcPlayerId].Keys)
+                {
+                    playersWithModifiedCards.Add(tgtPlayerId);
+                    foreach (var card in _returnTributeCardsBuffer[srcPlayerId][tgtPlayerId])
+                    {
+                        _cardsInHandByPlayerId[srcPlayerId].Remove(card);
+                        _cardsInHandByPlayerId[tgtPlayerId].Add(card);
+                    }
+                }
+            }
+
+            var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
+
+            // TODO: only sort players with added cards
+            foreach (var player in playersWithModifiedCards)
+            {
+                _cardsInHandByPlayerId[player].Sort(Card.Comparator);
+                playerCardsDictionary[player] = _cardsInHandByPlayerId[player];
+            }
+
+            return playerCardsDictionary;
+        }
+
         /// <summary>
         /// input: playerId: of whom want to play; UserCard: the cards it wants to play
         /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
@@ -182,14 +289,11 @@ namespace ZhuoHeiChaCore
         public NotificationRequest PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
         {
             int possible_next_player = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
-            // TODO: get UserCard fron frontend, just for test in here
-            //List<Card> UserCard = new List<Card> { };
-            //UserCard.Add(new Card(CardType.CLUBS_THREE));
-            //UserCard.Add(new Card(CardType.SPADE_FOUR));
-            //UserCard.Add(new Card(CardType.HEART_FIVE));
-            // TODO:
 
-            // check + throw
+            if(_currentPlayer != playerId)
+            {
+                throw new ArgumentException($"Player {playerId} cannot play hand now, because he/she is not the current player!");
+            }
 
             Hand userHand = HandFactory.EMPTY_HAND;
             try
@@ -333,114 +437,12 @@ namespace ZhuoHeiChaCore
         }
 
 
-        public Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
-        {
-            var cardList = cards.ToList();
-
-            // check if both ids are valid
-            if (!_returnTributeDependencyGraph.TryGetValue(sourcePlayerId, out var receivingPlayers)
-                || !receivingPlayers.TryGetValue(targetPlayerId, out var numOfCardsToSend))
-                throw new ArgumentException($"Player {sourcePlayerId} cannot send cards to player {targetPlayerId}!");
-
-            // check if sourcePlayer has the cards
-            if (!PlayerHasCards(sourcePlayerId, cardList))
-                throw new ArgumentException($"Player {sourcePlayerId} doesn't have all of the following cards: " +
-                    $"{_cardHelper.ConvertCardsToString(cardList)}");
-
-            // check if number of cards to be sent is correct
-            if (cardList.Count != numOfCardsToSend)
-                throw new ArgumentException($"Player {sourcePlayerId} is trying to send {cardList.Count} cards to " +
-                    $"{targetPlayerId}. Expecting {numOfCardsToSend} cards.");
-
-            // store the returned cards to the buffer
-            if (!_returnTributeCardsBuffer.TryGetValue(sourcePlayerId, out var tributeCardsByTargetPlayerId))
-            {
-                _returnTributeCardsBuffer[sourcePlayerId] = new Dictionary<int, List<Card>>
-                {
-                    { targetPlayerId, cardList }
-                };
-            }
-            else
-            {
-                tributeCardsByTargetPlayerId[targetPlayerId] = cardList;
-            }
-
-            // remove the dependency to avoid duplication
-            _returnTributeDependencyGraph[sourcePlayerId].Remove(targetPlayerId);
-            if (_returnTributeDependencyGraph[sourcePlayerId].Count == 0)
-                _returnTributeDependencyGraph.Remove(sourcePlayerId);
-
-            // process the buffer if all tributes have been sent
-            var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
-            if (_returnTributeDependencyGraph.Count == 0)
-                playerCardsDictionary = ProcessTributeBuffer();
-
-            return playerCardsDictionary;
-        }
-
-        /// <summary>
-        /// Add a new player to the current game. Throws exception if max capacity reached
-        /// </summary>
-        /// <returns>Id of the newly added player</returns>
-        public int AddPlayer()
-        {
-            if (_remainingPlayers.Count >= _capacity)
-                throw new InvalidOperationException($"Cannot add a new player to game! Max capacity {_capacity} reached!");
-
-            var newPlayerId = _remainingPlayers.Count;
-            _remainingPlayers.Add(newPlayerId);
-
-            return newPlayerId;
-        }
-
-        /// <summary>
-        /// Check if all of cards belong to the player
-        /// </summary>
-        /// <param name="playerId"></param>
-        /// <param name="cards"></param>
-        private bool PlayerHasCards(int playerId, IEnumerable<Card> cards)
-        {
-            return cards.All(card => _cardsInHandByPlayerId[playerId].Contains(card));
-        }
-
-        /// <summary>
-        /// Commits the tribute card changes previously stored in the buffer
-        /// </summary>
-        /// <returns>A dictionary containing the list of players whose cards changed as well 
-        /// as their updated cards</returns>
-        private Dictionary<int, IEnumerable<Card>> ProcessTributeBuffer()
-        {
-            var playersWithModifiedCards = new HashSet<int>();
-            foreach (var srcPlayerId in _returnTributeCardsBuffer.Keys)
-            {
-                playersWithModifiedCards.Add(srcPlayerId);
-                foreach (var tgtPlayerId in _returnTributeCardsBuffer[srcPlayerId].Keys)
-                {
-                    playersWithModifiedCards.Add(tgtPlayerId);
-                    foreach (var card in _returnTributeCardsBuffer[srcPlayerId][tgtPlayerId])
-                    {
-                        _cardsInHandByPlayerId[srcPlayerId].Remove(card);
-                        _cardsInHandByPlayerId[tgtPlayerId].Add(card);
-                    }
-                }
-            }
-
-            var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
-
-            // TODO: only sort players with added cards
-            foreach (var player in playersWithModifiedCards)
-            {
-                _cardsInHandByPlayerId[player].Sort(Card.Comparator);
-                playerCardsDictionary[player] = _cardsInHandByPlayerId[player];
-            }
-
-            return playerCardsDictionary;
-        }
+        
     }
 
     public interface IGame
     {
-        Dictionary<int, IEnumerable<Card>> SendCards(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
+        Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
     }
 
