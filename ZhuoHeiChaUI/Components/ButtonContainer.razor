@@ -1,4 +1,6 @@
-﻿@using Microsoft.AspNetCore.SignalR.Client
+﻿@using ZhuoHeiChaUI.Events
+@using ZhuoHeiChaUI.Services
+@inject PlayerHubConnectionService PlayerHubConnection
 
 <h3>ButtonRegion</h3>
 <div>
@@ -12,55 +14,93 @@
                 跳过
             </button>
             break;
-        case ClientState.SendingTribute:
-            <button type="button" class="button" name="sendTribute">
+        case ClientState.ReturningTribute:
+            <button type="button" class="button" name="returnTribute" @onclick="OnReturnTributeButtonClicked">
                 确认
             </button>
             break;
         case ClientState.AceGoingPublic:
-            <button type="button" class="button" name="aceGoPublic">
+            <button type="button" class="button" name="aceGoPublic" @onclick="OnAceGoPublicButtonClicked">
                 亮黑叉
             </button>
-            <button type="button" class="button" name="aceStayPrivate">
+            <button type="button" class="button" name="aceStayPrivate" @onclick="OnAceStayPrivateButtonClicked">
                 不亮
             </button>
             break;
         case ClientState.AskingAnotherRound:
             <div class="another-round">
-                <button type="button" class="button" name="playAnotherRound">
+                <button type="button" class="button" name="playAnotherRound" @onclick="OnPlayAnotherRoundButtonClicked">
                     再来!
                 </button>
             </div>
             break;
         default:
+            <span></span>
             break;
     }
 </div>
 
 
 @code {
-    private ClientState clientState;
-
-    public void RegisterNotificationHandlers(HubConnection hubConnection)
-    {
-        //hubConnection.On()
-    }
+    private ClientState clientState = ClientState.Default;
 
     private enum ClientState
     {
+        Default,
         Playing,
-        SendingTribute,
+        ReturningTribute,
         AceGoingPublic,
         AskingAnotherRound
     }
 
-    private void OnPlayCardButtonClicked()
-    {
+    private void OnPlayCardButtonClicked() { }
 
+    private void OnSkipButtonClicked() { }
+
+    private void OnReturnTributeButtonClicked() { }
+
+    private void OnAceGoPublicButtonClicked() { }
+
+    private void OnAceStayPrivateButtonClicked() { }
+
+    private void OnPlayAnotherRoundButtonClicked() { }
+
+    protected override void OnInitialized()
+    {
+        PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
+        PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
+        PlayerHubConnection.NotifyPlayAnotherRound += OnNotifyPlayAnotherRound;
+        PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
+        PlayerHubConnection.NotifyPlayHandSuccess += OnNotifyPlayHandSuccess;
     }
 
-    private void OnSkipButtonClicked()
+    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs e)
     {
+        clientState = ClientState.Playing;
+        StateHasChanged();
+    }
 
+    private void OnNotifyAceGoPublic(object? sender, NotifyAceGoPublicEventArgs e)
+    {
+        clientState = ClientState.AceGoingPublic;
+        StateHasChanged();
+    }
+
+    private void OnNotifyPlayAnotherRound(object? sender, NotifyPlayAnotherRoundEventArgs e)
+    {
+        clientState = ClientState.AskingAnotherRound;
+        StateHasChanged();
+    }
+
+    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs e)
+    {
+        clientState = ClientState.ReturningTribute;
+        StateHasChanged();
+    }
+
+    private void OnNotifyPlayHandSuccess(object? sender, NotifyPlayHandSuccessEventArgs e)
+    {
+        clientState = ClientState.Default;
+        StateHasChanged();
     }
 }

@@ -1,0 +1,16 @@
+﻿<div class="playingCards">
+    <span class="card-count">@remainingCardCount</span>
+    <span class="card back"></span>
+</div>
+
+@code {
+    [Parameter]
+    public int PlayerId { get; set; }
+
+    private int remainingCardCount = 5;
+
+    private void OnCardCountUpdated(int updatedCardCount)
+    {
+        remainingCardCount = updatedCardCount;
+    }
+}
