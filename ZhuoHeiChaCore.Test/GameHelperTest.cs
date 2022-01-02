@@ -34,6 +34,9 @@ namespace ZhuoHeiChaCore.Test
             Assert.Equal(valueList.Count, group2.Count);
         }
 
+        // test 1:
+        // GetPlayerType(blackAce) should return PlayerType.Ace GetPlayerType(other cards) should return PlayerType.Normal; 
+
         [Theory]
         [MemberData(nameof(GetTestData))]
         public void GroupConsecutiveElementsOfSameType_ShouldGroupConsecutiveElementsOfSameType_WhenThereAreConsecutiveElementsOfSameType(List<int> valueList, List<List<int>> expectedGroups)

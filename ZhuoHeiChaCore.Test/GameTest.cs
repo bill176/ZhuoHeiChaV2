@@ -77,5 +77,13 @@ namespace ZhuoHeiChaCore.Test
         // player 1 play {7, 7} and player 1 finished game should work, and _lastValidPlayer should equals 2, _currentPlayer should equals 2
         // _lastValidHand should equals EMPTYHAND and game should ended, black ace win. finish order: {1, 0, 2}
 
+        // test 9:
+        // 3 players, at last game: BlackAceList={0,0,2}, finishOrder = {2,0,1}
+        // After initGame(), blacklist,tributePair should be updated, finishOrder, lastvalidplayer,lastHand,currentplayer should be cleared or equals to 0.
+
+        // test 10:
+        // 3 players, BlackAceList={0,0,1}
+        // AceGoPublic(3), AceGoPublic(0) should fail; AceGoPublic(2) should work and the playerTypeList should be updated.
+
     }
 }

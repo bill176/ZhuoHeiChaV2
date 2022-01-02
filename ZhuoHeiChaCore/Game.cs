@@ -97,7 +97,12 @@ namespace ZhuoHeiChaCore
             _finishOrder.Clear();
             // initialize player type list list based on cards in hand
             foreach (var kvp in _cardsInHandByPlayerId)
-                _playerTypeList[kvp.Key] = _gameHelper.GetPlayerType(kvp.Value);            
+                _playerTypeList[kvp.Key] = _gameHelper.GetPlayerType(kvp.Value);
+
+            _currentPlayer = 0;
+            _lastValidHand = HandFactory.EMPTY_HAND;
+            _lastValidPlayer = 0;
+            _didBlackAceWin = false;
 
             // save card list after paying tribute
             var cardsPairByPlayerId = new Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)>();
