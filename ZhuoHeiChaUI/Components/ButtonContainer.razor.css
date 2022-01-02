@@ -8,3 +8,7 @@
     font-size: 0;
     border: none !important;
 }
+
+div {
+    min-height: 40px;
+}

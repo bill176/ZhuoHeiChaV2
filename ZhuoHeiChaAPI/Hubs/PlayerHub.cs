@@ -14,7 +14,16 @@ namespace ZhuoHeiChaAPI.Hubs
         {
             // notify the connected client of its connection id
             await Clients.Caller.SendAsync(ClientHubMethods.ReceiveConnectionId, Context.ConnectionId);
+
+            // for testing only!
+            await Clients.Caller.SendAsync(ClientHubMethods.ReceiveMessage, "hello world!");
             await base.OnConnectedAsync();
+        }
+
+        // for testing only!!!
+        public async Task NotifyPlayCard()
+        {
+            await Clients.Caller.SendAsync(ClientHubMethods.PlayCard);
         }
     }
 }

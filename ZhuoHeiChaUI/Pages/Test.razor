@@ -4,10 +4,12 @@
 @inject NavigationManager NavigationManager
 @using System.Net.Http
 @inject HttpClient Http
+@using ZhuoHeiChaUI.Services
+@using ZhuoHeiChaUI.Events
+@inject PlayerHubConnectionService PlayerHubConnection
 @using System.Threading.Tasks
 @using ZhuoHeiChaShared
 @using ZhuoHeiChaUI.Components
-@using ZhuoHeiChaUI
 
 <h1>Test</h1>
 <p>Hello! This is a test page with shortcuts for feature testing.</p>
@@ -27,7 +29,7 @@
 
 <div>
     <h3>Hub Connection</h3>
-    <button @onclick="ConnectToHub">Connect to hub</button>
+    <button @onclick="OnAddPlayerClicked">Connect to hub</button>
     <div>
         <label>Game Id</label>
         <input @bind="@gameId" />
@@ -43,7 +45,13 @@
     <h4>Non-Interactive Playing Cards</h4>
     <PlayingCards CardIds="@cardIds" IsInteractive="false" />
 </div>
+
+<div>
+    <h4>Request Play Card Notification</h4>
+    <button @onclick="RequestPlayCardNotification">Request Notification</button>
+</div>
 <ButtonContainer />
+<RemainingCardCount />
 
 @code {
     private HubConnection _hubConnection;
@@ -52,7 +60,24 @@
     private int capacity;
     private string errMsg;
 
-    private List<int> cardIds = new List<int> { 25,26,27,28,29,30,51,52,53 };
+    private List<int> cardIds = new List<int> { 25, 26, 27, 28, 29, 30, 51, 52, 53 };
+
+    private async Task OnAddPlayerClicked()
+    {
+        await PlayerHubConnection.EstablishConnection();
+
+        PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
+    }
+
+    private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs e)
+    {
+        Console.WriteLine(e.Message);
+    }
+
+    private async Task RequestPlayCardNotification()
+    {
+        await PlayerHubConnection.RequestPlayCardNotification();
+    }
 
     private async Task ConnectToHub()
     {
@@ -67,7 +92,7 @@
                 Name = "Blabla"
             });
             playerId = await response.Content.ReadAsStringAsync();
-            
+
             Console.WriteLine($"Player # {playerId} added. Connection id: {connectionId}");
         });
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using ZhuoHeiChaUI.Services;
 
 namespace ZhuoHeiChaUI
 {
@@ -19,6 +20,8 @@ namespace ZhuoHeiChaUI
 
             // TODO: refactor the IP address into config
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:7000") });
+
+            builder.Services.AddSingleton<PlayerHubConnectionService>();
 
             await builder.Build().RunAsync();
         }
