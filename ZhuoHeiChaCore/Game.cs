@@ -6,18 +6,16 @@ namespace ZhuoHeiChaCore
 {
     public class Game : IGame
     {
-        private int _currentPlayer = 0;
+        private int _capacity;
         private readonly List<Card> _remainingCards = new List<Card>();
         private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
-        private readonly List<int> _remainingPlayers = new List<int>();
-        //private readonly List<int> _remainingPlayers = new List<int>()  {  0,1,2};
-        private int _capacity;
-        private readonly List<int> _finishOrder = new List<int>();
-        //private readonly List<int> _finishOrder = new List<int>{ 0, 2, 1};
         private readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
-        //private readonly List<int> _blackAceList = new List<int>() {1, 0, 0 };
+        private readonly List<int> _remainingPlayers = new List<int>();
         private readonly List<(int, int)> _tributePairs = new List<(int, int)>();
-
+        
+        private readonly List<int> _finishOrder = new List<int>();
+        
+        private int _currentPlayer = 0;
         private int _lastValidPlayer = 0;        
         private Hand _lastValidHand = HandFactory.EMPTY_HAND;
         private bool _didBlackAceWin = false;
@@ -61,10 +59,9 @@ namespace ZhuoHeiChaCore
 
 
         // distribute cards, check tribute list, notify frontend, pay tribute
-        private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame()
+        private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame(int numOfDecks = 1)
         {
             // distribute cards
-            int numOfDecks = 1;   // TODO: need get some data from frontend ###
             int numOfPlayers = 3;       // int numOfPlayers = _cardsInHandByPlayerId.Count() ###
 
             var cards = _cardFactory.GetFullDeckShuffled(numOfDecks);
@@ -80,6 +77,7 @@ namespace ZhuoHeiChaCore
 
             }
 
+            // return cards for player before paying tribute
             var cardsBeforeTributeByPlayerId = new Dictionary<int, IEnumerable<Card>>();
             foreach (var playerId in _remainingPlayers)
             {
@@ -93,12 +91,13 @@ namespace ZhuoHeiChaCore
             _tributePairs.Clear();
             _tributePairs.AddRange(tributePairs);
 
-            _finishOrder.Clear();
-            // TODO: initialize this list based on cards in hand
-            _playerTypeList.Clear();
-
             // send tribute
             PayTribute();
+
+            _finishOrder.Clear();
+            // initialize player type list list based on cards in hand
+            foreach (var kvp in _cardsInHandByPlayerId)
+                _playerTypeList[kvp.Key] = _gameHelper.GetPlayerType(kvp.Value);            
 
             // save card list after paying tribute
             var cardsPairByPlayerId = new Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)>();
@@ -109,7 +108,8 @@ namespace ZhuoHeiChaCore
                 cardsAfterTribute.Sort(Card.Comparator);
                 cardsPairByPlayerId[playerId] = (cardsBeforeTributeByPlayerId[playerId], cardsAfterTribute);
             }
-
+            
+            // TODO: start return tribute
             return cardsPairByPlayerId;
         }
 
@@ -228,6 +228,20 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
+        public GameActionResult AceGoPublic(int goPublicPlayerId)
+        {
+            // check valid or not
+            if (!_remainingPlayers.Contains(goPublicPlayerId))
+                return new GameActionResult(GameReturnType.Error, " player id is not valid");
+            else if (_playerTypeList[goPublicPlayerId] != PlayerType.Ace)
+                return new GameActionResult(GameReturnType.Error, " this player is not Black Ace, can not go public");
+            else 
+            {
+                _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
+                return new GameActionResult(GameReturnType.NoAction);
+            }
+        }
+
         /// <summary>
         /// input: playerId: of whom want to play; UserCard: the cards it wants to play
         /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
@@ -326,6 +340,7 @@ namespace ZhuoHeiChaCore
                 _didBlackAceWin = true;
                 _finishOrder.AddRange(_remainingPlayers);
                 _remainingPlayers.Clear();
+                _cardsInHandByPlayerId.Clear();
                 return true;
             }
             else

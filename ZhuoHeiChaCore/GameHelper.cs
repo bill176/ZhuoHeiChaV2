@@ -7,6 +7,14 @@ namespace ZhuoHeiChaCore
 {
     public class GameHelper : IGameHelper
     {
+        public PlayerType GetPlayerType(List<Card> cardsOfPlayer)
+        {
+            if (cardsOfPlayer.Select(x => x.CardType).Contains(CardType.SPADE_ACE))
+                return PlayerType.Ace;
+            else
+                return PlayerType.Normal;
+        }
+
         public IEnumerable<(int payer, int receiver)> GeneratePayerReceiverPairsForConsecutiveGroups(List<List<int>> groups)
         {
             var pairs = new List<(int, int)>();
@@ -78,6 +86,7 @@ namespace ZhuoHeiChaCore
 
     public interface IGameHelper
     {
+        PlayerType GetPlayerType(List<Card> cardsOfPlayer);
         List<List<T>> GroupConsecutivePlayersOfSameType<T>(List<T> values, Func<int, PlayerType> playerTypeSelector);
         IEnumerable<(int payer, int receiver)> GeneratePayerReceiverPairsForConsecutiveGroups(List<List<int>> groups);
         bool HasFourTwo(List<Card> cards);
