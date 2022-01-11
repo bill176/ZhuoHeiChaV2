@@ -6,32 +6,31 @@ namespace ZhuoHeiChaCore
 {
     public class Game : IGame
     {
-        private int _capacity;
-        private readonly List<Card> _remainingCards = new List<Card>();
-        private readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
-        private readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
-        private readonly List<int> _remainingPlayers = new List<int>();
-        private readonly List<(int, int)> _tributePairs = new List<(int, int)>();
-        
-        private readonly List<int> _finishOrder = new List<int>();
-        
-        private int _currentPlayer = 0;
-        private int _lastValidPlayer = 0;        
-        private Hand _lastValidHand = HandFactory.EMPTY_HAND;
-        private bool _didBlackAceWin = false;
+        protected int _capacity;
+        protected readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
+        protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        protected readonly List<int> _remainingPlayers = new List<int>();
+        protected readonly List<(int, int)> _tributePairs = new List<(int, int)>();
+
+        protected readonly List<int> _finishOrder = new List<int>();
+
+        protected int _currentPlayer = 0;
+        protected int _lastValidPlayer = 0;
+        protected Hand _lastValidHand = HandFactory.EMPTY_HAND;
+        protected bool _didBlackAceWin = false;
 
         // Key: source player id
         // Value: a dictionary with
         //      Key: target player id
         //      Value: number of cards to send
-        private readonly Dictionary<int, Dictionary<int, int>> _returnTributeDependencyGraph = new Dictionary<int, Dictionary<int, int>>();
+        protected readonly Dictionary<int, Dictionary<int, int>> _returnTributeDependencyGraph = new Dictionary<int, Dictionary<int, int>>();
 
         // ((payer, receiver), list of cards)
-        private readonly List<((int, int), List<Card>)> _returnTributeCardsBuffer = new List<((int, int), List<Card>)>();
+        protected readonly List<((int, int), List<Card>)> _returnTributeCardsBuffer = new List<((int, int), List<Card>)>();
 
-        private readonly ICardFactory _cardFactory;
-        private readonly ICardHelper _cardHelper;
-        private readonly IGameHelper _gameHelper;
+        protected  ICardFactory _cardFactory;
+        protected  ICardHelper _cardHelper;
+        protected  IGameHelper _gameHelper;
 
         public Game(ICardFactory cardFactory, ICardHelper cardHelper, IGameHelper gameHelper, int capacity)
         {
@@ -41,6 +40,8 @@ namespace ZhuoHeiChaCore
 
             _capacity = capacity;
         }
+
+        protected Game() { }
 
         /// <summary>
         /// Add a new player to the current game. Throws exception if max capacity reached
@@ -59,10 +60,10 @@ namespace ZhuoHeiChaCore
 
 
         // distribute cards, check tribute list, notify frontend, pay tribute
-        private Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame(int numOfDecks = 1)
+        public Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame(int numOfDecks = 1)
         {
             // distribute cards
-            int numOfPlayers = 3;       // int numOfPlayers = _cardsInHandByPlayerId.Count() ###
+            int numOfPlayers = _remainingPlayers.Count();
 
             var cards = _cardFactory.GetFullDeckShuffled(numOfDecks);
 
@@ -97,7 +98,7 @@ namespace ZhuoHeiChaCore
             _finishOrder.Clear();
             // initialize player type list list based on cards in hand
             foreach (var kvp in _cardsInHandByPlayerId)
-                _playerTypeList[kvp.Key] = _gameHelper.GetPlayerType(kvp.Value);
+                _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
 
             _currentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
@@ -118,8 +119,11 @@ namespace ZhuoHeiChaCore
             return cardsPairByPlayerId;
         }
 
-        private IEnumerable<(int, int)> GetTributePairs()
+        protected IEnumerable<(int, int)> GetTributePairs()
         {
+            // return empty list at first round.
+            if(_finishOrder.Count == 0)
+                return Enumerable.Empty<(int, int)>();
             if (_finishOrder.Any(x => _gameHelper.HasFourTwo(_cardsInHandByPlayerId[x]))
                 && !_gameHelper.HasFourTwo(_cardsInHandByPlayerId[_finishOrder[0]]))
                 return Enumerable.Empty<(int, int)>();
@@ -135,7 +139,7 @@ namespace ZhuoHeiChaCore
         /// call tribute in order
         /// refer to public ace list
         /// </summary>
-        private void PayTribute()
+        protected void PayTribute()
         {
             foreach (var (paying, receiving) in _tributePairs)
             {
@@ -145,7 +149,7 @@ namespace ZhuoHeiChaCore
             }
         }
 
-        private int GetNumOfTributeCards(int payer, int receiver)
+        protected int GetNumOfTributeCards(int payer, int receiver)
         {
             return Math.Max((int)_playerTypeList[payer], (int)_playerTypeList[receiver]);
         }
@@ -261,6 +265,10 @@ namespace ZhuoHeiChaCore
                 throw new ArgumentException($"Player {playerId} cannot play hand now, because he/she is not the current player!");
             }
 
+            foreach(Card c in UserCard)
+                if(!_cardsInHandByPlayerId[playerId].Contains(c))
+                    throw new ArgumentException($"Player {playerId} does not have these cards!");
+
             Hand userHand = HandFactory.EMPTY_HAND;
             try
             {
@@ -313,7 +321,7 @@ namespace ZhuoHeiChaCore
             return new GameActionResult(GameReturnType.PlayHandSuccess, UserCard, _currentPlayer);     // send back the update cards
         }
 
-        private void CheckPlayerFinished(int playerId)
+        protected void CheckPlayerFinished(int playerId)
         {
             if (_cardsInHandByPlayerId[playerId].Count == 0) 
             {
@@ -331,7 +339,7 @@ namespace ZhuoHeiChaCore
 
         }
 
-        private bool CheckGameEnded()
+        protected bool CheckGameEnded()
         {
             if (_remainingPlayers.All(x => _playerTypeList[x] == PlayerType.Normal))
             {
