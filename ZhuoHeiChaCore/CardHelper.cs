@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace ZhuoHeiChaCore
 {
@@ -21,15 +22,22 @@ namespace ZhuoHeiChaCore
         {
             var cards = cardIds.Select(id => _cardFactory.GetCardById(id));
 
-            if (cards.Any(x => x == null)) return null;
+            if (cards.Any(x => x == null))
+                throw new ArgumentException($"Cards {string.Join(',', cardIds)} contain an invalid value");
 
             return cards;
+        }
+
+        public IEnumerable<int> ConvertCardsToIds(IEnumerable<Card> cards)
+        {
+            return cards.Select(c => (int)c.CardType);
         }
     }
 
     public interface ICardHelper
     {
         IEnumerable<Card> ConvertIdsToCards(IEnumerable<int> cardIds);
+        IEnumerable<int> ConvertCardsToIds(IEnumerable<Card> cards);
         string ConvertCardsToString(IEnumerable<Card> cards);
     }
 }

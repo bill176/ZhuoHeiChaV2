@@ -57,48 +57,79 @@ namespace ZhuoHeiChaAPI.Services
             return newGameId;
         }
 
-        public bool SendCards(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<int> cardIds, out Dictionary<int, IEnumerable<Card>> updatedPlayerCards)
+        public InitGameReturnValue InitGame(int gameId, int numOfDecks = 1)
         {
-            updatedPlayerCards = null;
-
             // check if game id is valid
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
             {
-                _logger.LogError($"{gameId} is not a valid game id!");
-                return false;
-            }
-
-            // check if card ids are valid
-            var cards = _cardHelper.ConvertIdsToCards(cardIds);
-            if (cards == null)
-            {
-                _logger.LogError($"{string.Join(',', cardIds)} contains invalid cards");
-                return false;
+                throw new ArgumentException($"{gameId} is not a valid game id!");
             }
 
             // perform the card change
             var (game, lockObject) = gameLockPair;
             lock (lockObject)
             {
-                try
-                {
-                    updatedPlayerCards = game.ReturnTribute(sourcePlayerId, targetPlayerId, cards);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Unable to send cards!");
-                    return false;
-                }
+                return game.InitGame();
+            }
+        }
+
+        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<Card> card)
+        {
+            // check if game id is valid
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new ArgumentException($"{gameId} is not a valid game id!");
             }
 
-            return true;
+            // perform the card change
+            var (game, lockObject) = gameLockPair;
+            lock (lockObject)
+            {
+                return game.ReturnTribute(sourcePlayerId, targetPlayerId, card);
+            }
         }
+
+        public GameActionResult AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic)
+        {
+            // add lock
+            // how to use function in game?
+
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new ArgumentException($"{gameId} is not a valid game id!");
+            }
+
+            var (game, lockObject) = gameLockPair;
+            lock (lockObject)
+            {
+                return game.AceGoPublic(goPublicPlayerId, isGoingPublic);
+            }
+        }
+
+        public IEnumerable<PlayerType> GetPlayerTypeList(int gameId)
+        {
+            // assume gameId is always valid since it's called after ReturnTribute succeeded
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get playerTypes for game {gameId}");
+            }
+
+            var (game, lockObject) = gameLockPair;
+            lock (lockObject)
+            {
+                return game.PlayerTypeList;
+            }
+        }
+
     }
 
     public interface IGameService
     {
-        bool SendCards(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<int> cardIds, out Dictionary<int, IEnumerable<Card>> updatedPlayerCards);
+        InitGameReturnValue InitGame(int gameId, int numOfDecks = 1);
+        Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cardIds);
         int AddPlayerToGame(int gameId);
         int CreateNewGame(int capacity);
+        GameActionResult AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic);
+        IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
     }
 }

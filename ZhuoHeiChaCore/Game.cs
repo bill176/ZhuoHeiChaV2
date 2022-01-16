@@ -9,6 +9,9 @@ namespace ZhuoHeiChaCore
         protected int _capacity;
         protected readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
         protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+
+        public IEnumerable<PlayerType> PlayerTypeList => _playerTypeList;
+
         protected readonly List<int> _remainingPlayers = new List<int>();
         protected readonly List<(int, int)> _tributePairs = new List<(int, int)>();
 
@@ -60,7 +63,7 @@ namespace ZhuoHeiChaCore
 
 
         // distribute cards, check tribute list, notify frontend, pay tribute
-        public Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> InitGame(int numOfDecks = 1)
+        public InitGameReturnValue InitGame(int numOfDecks = 1)
         {
             // distribute cards
             int numOfPlayers = _remainingPlayers.Count();
@@ -75,7 +78,6 @@ namespace ZhuoHeiChaCore
             {
                 _cardsInHandByPlayerId.Add(i, deckForUser[i]);
                 _cardsInHandByPlayerId[i].Sort(Card.ReverseComparator);
-
             }
 
             // return cards for player before paying tribute
@@ -114,9 +116,19 @@ namespace ZhuoHeiChaCore
                 cardsAfterTribute.Sort(Card.Comparator);
                 cardsPairByPlayerId[playerId] = (cardsBeforeTributeByPlayerId[playerId], cardsAfterTribute);
             }
-            
+
             // TODO: start return tribute
-            return cardsPairByPlayerId;
+            var returnTributeListByPlayerId = new Dictionary<int, IEnumerable<int>>();
+            foreach (var playerId in _remainingPlayers)
+            {
+                returnTributeListByPlayerId[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => p.Item1);
+            }
+
+            return new InitGameReturnValue
+            {
+                CardsPairsByPlayerId = cardsPairByPlayerId,
+                ReturnTributeListByPlayerId = returnTributeListByPlayerId
+            };
         }
 
         protected IEnumerable<(int, int)> GetTributePairs()
@@ -155,7 +167,7 @@ namespace ZhuoHeiChaCore
         }
 
 
-        public void PayTribute(int payingPlayerId, int receivingPlayerId)
+        private void PayTribute(int payingPlayerId, int receivingPlayerId)
         {
             var tribute = _cardsInHandByPlayerId[payingPlayerId].First(x  =>  x.CardType != CardType.SPADE_ACE);
 
@@ -237,18 +249,19 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
-        public GameActionResult AceGoPublic(int goPublicPlayerId)
+        public GameActionResult AceGoPublic(int goPublicPlayerId, bool isGoingPublic)
         {
             // check valid or not
-            if (!_remainingPlayers.Contains(goPublicPlayerId))
-                return new GameActionResult(GameReturnType.Error, " player id is not valid");
-            else if (_playerTypeList[goPublicPlayerId] != PlayerType.Ace)
-                return new GameActionResult(GameReturnType.Error, " this player is not Black Ace, can not go public");
-            else 
+            if (!_remainingPlayers.Contains(goPublicPlayerId) || _playerTypeList[goPublicPlayerId] != PlayerType.Ace)
             {
-                _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
-                return new GameActionResult(GameReturnType.NoAction);
+                throw new ArgumentException($"Player {goPublicPlayerId} is not a black ace!");
             }
+
+            if (!isGoingPublic)
+                return new GameActionResult(GameReturnType.NoAction);
+
+            _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
+            return new GameActionResult(GameReturnType.PublicAce, goPublicPlayerId);
         }
 
         /// <summary>
@@ -363,8 +376,14 @@ namespace ZhuoHeiChaCore
 
     public interface IGame
     {
+        
+        IEnumerable<PlayerType> PlayerTypeList { get; }
+
+        InitGameReturnValue InitGame(int numOfDecks = 1);
         Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
+        GameActionResult AceGoPublic(int goPublicPlayerId, bool isGoingPublic);
+        GameActionResult PlayHand(int playerId, List<Card> UserCard);
     }
 
     public enum PlayerType
@@ -372,5 +391,11 @@ namespace ZhuoHeiChaCore
         Normal,
         Ace,
         PublicAce
+    }
+
+    public class InitGameReturnValue
+    {
+        public Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> CardsPairsByPlayerId { get; set; }
+        public Dictionary<int, IEnumerable<int>> ReturnTributeListByPlayerId { get; set; }
     }
 }

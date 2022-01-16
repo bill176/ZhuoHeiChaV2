@@ -45,7 +45,7 @@ namespace ZhuoHeiChaAPI.Services
             SendMessageToAll(gameId, $"Player {playerId} of game {gameId} just joined!");
         }
 
-        public Task SendCardUpdate(int gameId, int playerId, List<Card> newCards)
+        public async Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards)
         {
             throw new NotImplementedException();
         }
@@ -53,6 +53,12 @@ namespace ZhuoHeiChaAPI.Services
         public async Task SendMessageToAll(int gameId, string message)
         {
             await _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.ReceiveMessage, message);
+        }
+
+        public async Task AskAllAceGoPublic(int gameId, int playerId, PlayerType playerType)
+        {
+            // TODO:
+            throw new NotImplementedException();
         }
 
         private string GetClientId(int gameId, int playerId)
@@ -64,11 +70,12 @@ namespace ZhuoHeiChaAPI.Services
     public interface IClientNotificationService
     {
         void RegisterClient(int gameId, int playerId, string connectionId);
-        Task SendCardUpdate(int gameId, int playerId, List<Card> newCards);
+        Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);
-        
+        Task AskAllAceGoPublic(int gameId, int playerId, PlayerType playerType);
+
         // TODO: complete this list for things such as NotifyAceGoPublic, NotifyCardsBeforeTribute, etc.
     }
 }

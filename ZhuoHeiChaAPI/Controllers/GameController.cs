@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ZhuoHeiChaAPI.Hubs;
 using ZhuoHeiChaAPI.Services;
+using ZhuoHeiChaCore;
 using ZhuoHeiChaShared;
 
 namespace ZhuoHeiChaAPI.Controllers
@@ -20,16 +21,19 @@ namespace ZhuoHeiChaAPI.Controllers
         private readonly IGameService _gameService;
         private readonly IHubContext<PlayerHub> _hubContext;
         private readonly IClientNotificationService _clientNotificationService;
+        private readonly ICardHelper _cardHelper;
 
         public GameController(
             IGameService gameService,
             IHubContext<PlayerHub> hubContext,
             IClientNotificationService clientNotificationService,
+            ICardHelper cardHelper,
             ILogger<GameController> logger)
         {
             _gameService = gameService;
             _hubContext = hubContext;
             _clientNotificationService = clientNotificationService;
+            _cardHelper = cardHelper;
             _logger = logger;
         }
 
@@ -51,6 +55,8 @@ namespace ZhuoHeiChaAPI.Controllers
             {
                 var newPlayerId = _gameService.AddPlayerToGame(gameId);
                 _clientNotificationService.RegisterClient(gameId, newPlayerId, player.ConnectionId);
+
+                // TODO: if the room is full, initGame.
 
                 return Ok(newPlayerId);
             }
@@ -87,7 +93,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {
                 var newGameId = _gameService.CreateNewGame(capacity);
-                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");
+                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");                
 
                 return Ok(newGameId);
             }
@@ -98,5 +104,51 @@ namespace ZhuoHeiChaAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
+
+        //localhost:5000/api/game/5/returntribute
+        //body:
+        //    sourcePlayerId: 1,
+        //    targetPlaeyrId: 3,
+        //    card_id: ...
+
+        [HttpPost("{gameId:int}/ReturnTribute")]
+        public async Task<IActionResult> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<int> card_id) 
+        {
+            try
+            {
+                // convert sharedcard(frontend) to Card (backend)
+                var cards = _cardHelper.ConvertIdsToCards(card_id);
+
+                var updatedCardsByPlayer = _gameService.ReturnTribute(gameId, sourcePlayerId, targetPlayerId, cards);
+
+                if (updatedCardsByPlayer.Count != 0)    // the last player has finished pay tribute
+                {
+
+                    foreach (var playerId in updatedCardsByPlayer.Keys)
+                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(updatedCardsByPlayer[playerId]));
+
+                    // notify ace go public
+                    var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
+                    for (var id = 0; id < playerTypeList.Count; ++id)
+                        await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
+                }
+
+                return Ok();
+            }
+            catch (ArgumentException e)
+            {
+                _logger.LogError(e, "Argument Exception");
+                return BadRequest();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+
+
+
     }
 }

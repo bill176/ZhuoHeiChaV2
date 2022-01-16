@@ -10,6 +10,7 @@ namespace ZhuoHeiChaCore
         public List<Card> UpdatedCards = null;
         public string ErrorMessage = "";
         public int NextPlayerId = -1;
+        public int PublicAceId;
 
         public GameActionResult()
         {
@@ -33,6 +34,11 @@ namespace ZhuoHeiChaCore
             this.Type = Type;
             this.ErrorMessage = ErrorMessage;
         }
+        public GameActionResult(GameReturnType Type, int PublicAceId)
+        {
+            this.Type = Type;
+            this.PublicAceId = PublicAceId;
+        }
     }
 
     public enum GameReturnType
@@ -42,6 +48,7 @@ namespace ZhuoHeiChaCore
         PlayHandSuccess,
         GameEnded,
         StartReturnTribute,
+        PublicAce,
         Error
     }
 }
