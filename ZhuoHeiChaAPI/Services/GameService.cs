@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using ZhuoHeiChaCore;
 using ZhuoHeiChaCore.Factories;
+using ZhuoHeiChaCore.ReturnTypeAndValue;
 
 namespace ZhuoHeiChaAPI.Services
 {
@@ -89,10 +90,9 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public GameActionResult AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic)
+        public AceGoPublicReturn AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic)
         {
             // add lock
-            // how to use function in game?
 
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
             {
@@ -103,6 +103,22 @@ namespace ZhuoHeiChaAPI.Services
             lock (lockObject)
             {
                 return game.AceGoPublic(goPublicPlayerId, isGoingPublic);
+            }
+        }
+
+        public PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard)
+        {
+            // add lock
+
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new ArgumentException($"{gameId} is not a valid game id!");
+            }
+
+            var (game, lockObject) = gameLockPair;
+            lock (lockObject)
+            {
+                return game.PlayHand(playerId, UserCard);
             }
         }
 
@@ -129,7 +145,8 @@ namespace ZhuoHeiChaAPI.Services
         Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cardIds);
         int AddPlayerToGame(int gameId);
         int CreateNewGame(int capacity);
-        GameActionResult AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic);
+        AceGoPublicReturn AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic);
+        PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
         IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
     }
 }

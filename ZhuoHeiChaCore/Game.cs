@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ZhuoHeiChaCore.ReturnTypeAndValue;
 
 namespace ZhuoHeiChaCore
 {
@@ -249,7 +250,7 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
-        public GameActionResult AceGoPublic(int goPublicPlayerId, bool isGoingPublic)
+        public AceGoPublicReturn AceGoPublic(int goPublicPlayerId, bool isGoingPublic)
         {
             // check valid or not
             if (!_remainingPlayers.Contains(goPublicPlayerId) || _playerTypeList[goPublicPlayerId] != PlayerType.Ace)
@@ -258,10 +259,10 @@ namespace ZhuoHeiChaCore
             }
 
             if (!isGoingPublic)
-                return new GameActionResult(GameReturnType.NoAction);
+                return new AceGoPublicReturn(AceGoPublicReturnType.NoAction);
 
             _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
-            return new GameActionResult(GameReturnType.PublicAce, goPublicPlayerId);
+            return new AceGoPublicReturn(AceGoPublicReturnType.PublicAce, goPublicPlayerId);
         }
 
         /// <summary>
@@ -269,7 +270,7 @@ namespace ZhuoHeiChaCore
         /// check whether the cards is valid, and wether it is greater than the lastHand. return true if valid and greater than the lastHand or skip.
         /// return false, iff need user to resubmit
         /// </summary>
-        public GameActionResult PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
+        public PlayHandReturn PlayHand(int playerId, List<Card> UserCard)     // use CardFactory to create UserCard
         {
             int possible_next_player = (_currentPlayer + 1) % _cardsInHandByPlayerId.Count;
 
@@ -289,7 +290,7 @@ namespace ZhuoHeiChaCore
             }
             catch
             {
-                return new GameActionResult(GameReturnType.Resubmit, " Hand is not valid ");
+                return new PlayHandReturn(PlayHandReturnType.Resubmit, " Hand is not valid ");
             }
 
             if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // dealer cannot skip
@@ -301,19 +302,19 @@ namespace ZhuoHeiChaCore
                 }
                 _currentPlayer = possible_next_player;
 
-                return new GameActionResult(GameReturnType.PlayHandSuccess);
+                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess);
             }
 
             if (_lastValidPlayer == playerId)
                 if (userHand.Group == HandFactory.EMPTY_HAND.Group)      // dealer cannot skip
-                    return new GameActionResult(GameReturnType.Resubmit, " dealer cannot skip ");
+                    return new PlayHandReturn(PlayHandReturnType.Resubmit, " dealer cannot skip ");
                 else
                 { 
                     _lastValidHand = HandFactory.EMPTY_HAND;
                 }
 
             if (!userHand.CompareValue(_lastValidHand))
-                return new GameActionResult(GameReturnType.Resubmit, " your hand is smaller then the last hand ");
+                return new PlayHandReturn(PlayHandReturnType.Resubmit, " your hand is smaller then the last hand ");
 
             foreach (Card c in UserCard)
                 _cardsInHandByPlayerId[playerId].Remove(c);
@@ -328,10 +329,10 @@ namespace ZhuoHeiChaCore
             _lastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
             if (CheckGameEnded())
-                return new GameActionResult(GameReturnType.GameEnded);
+                return new PlayHandReturn(PlayHandReturnType.GameEnded);
 
             // TODO: update UserCard to be the remaining cards of the player
-            return new GameActionResult(GameReturnType.PlayHandSuccess, UserCard, _currentPlayer);     // send back the update cards
+            return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, UserCard, _currentPlayer);     // send back the update cards
         }
 
         protected void CheckPlayerFinished(int playerId)
@@ -382,8 +383,8 @@ namespace ZhuoHeiChaCore
         InitGameReturnValue InitGame(int numOfDecks = 1);
         Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
-        GameActionResult AceGoPublic(int goPublicPlayerId, bool isGoingPublic);
-        GameActionResult PlayHand(int playerId, List<Card> UserCard);
+        AceGoPublicReturn AceGoPublic(int goPublicPlayerId, bool isGoingPublic);
+        PlayHandReturn PlayHand(int playerId, List<Card> UserCard);
     }
 
     public enum PlayerType
@@ -393,9 +394,5 @@ namespace ZhuoHeiChaCore
         PublicAce
     }
 
-    public class InitGameReturnValue
-    {
-        public Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> CardsPairsByPlayerId { get; set; }
-        public Dictionary<int, IEnumerable<int>> ReturnTributeListByPlayerId { get; set; }
-    }
+    
 }

@@ -47,7 +47,6 @@ namespace ZhuoHeiChaCore
         Resubmit,
         PlayHandSuccess,
         GameEnded,
-        StartReturnTribute,
         PublicAce,
         Error
     }

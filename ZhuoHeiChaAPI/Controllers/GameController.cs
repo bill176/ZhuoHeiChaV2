@@ -10,6 +10,7 @@ using ZhuoHeiChaAPI.Hubs;
 using ZhuoHeiChaAPI.Services;
 using ZhuoHeiChaCore;
 using ZhuoHeiChaShared;
+using ZhuoHeiChaCore.ReturnTypeAndValue;
 
 namespace ZhuoHeiChaAPI.Controllers
 {
@@ -131,6 +132,45 @@ namespace ZhuoHeiChaAPI.Controllers
                     var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
                     for (var id = 0; id < playerTypeList.Count; ++id)
                         await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
+                }
+
+                return Ok();
+            }
+            catch (ArgumentException e)
+            {
+                _logger.LogError(e, "Argument Exception");
+                return BadRequest();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Exception");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+
+        [HttpPost("{gameId:int}/PlayHand")]
+        public async Task<IActionResult> PlayHand(int gameId, int playerId, List<Card> UserCard)
+        {
+            try
+            {
+                var updatedCardsByPlayer = _gameService.PlayHand(gameId, playerId, UserCard);
+                switch (updatedCardsByPlayer.Type)
+                {
+                    case PlayHandReturnType.Resubmit:
+                        // tell player:{playerId} the error message 
+                        break;
+
+                    case PlayHandReturnType.PlayHandSuccess:
+                        // tell frontend: current player, last valid player, last valid hand
+                        // tell frontend change player:{playerId} UI(hide playhand botton), change player:{current player} UI(show playhand button)                        
+                        break;
+
+                    case PlayHandReturnType.GameEnded:
+                        // tell everyone gameended
+                        // call initGame()
+                        break;
+
                 }
 
                 return Ok();
