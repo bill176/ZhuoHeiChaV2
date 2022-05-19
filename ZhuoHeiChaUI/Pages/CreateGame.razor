@@ -1,0 +1,42 @@
+﻿@page "/create-game"
+@using System.Net.Http
+@inject HttpClient Http
+@inject NavigationManager UriHelper
+
+<h3>CreateGame</h3>
+
+
+<div>
+    <h3>Game Creation</h3>
+    <button @onclick="NewGame">Create a new game</button>
+    <div>
+        <label>Capacity</label>
+        <input @bind="@capacity" />
+    </div>
+    <div>
+        <label>@gameId</label>
+        <label>@errMsg</label>
+    </div>
+</div>
+
+@code {
+    private int gameId;
+    private int capacity;
+    private string errMsg;
+
+    private async Task NewGame()
+    {
+        try
+        {
+            var response = await Http.PostAsync($"api/game?capacity={capacity}", new StringContent(string.Empty));
+            gameId = int.Parse(await response.Content.ReadAsStringAsync());
+            UriHelper.NavigateTo($"game/{gameId}");
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
+
+}

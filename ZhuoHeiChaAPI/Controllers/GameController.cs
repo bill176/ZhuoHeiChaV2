@@ -55,9 +55,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {
                 var newPlayerId = _gameService.AddPlayerToGame(gameId);
-                _clientNotificationService.RegisterClient(gameId, newPlayerId, player.ConnectionId);
-
-                // TODO: if the room is full, initGame.
+                _clientNotificationService.RegisterClient(gameId, newPlayerId, player);
 
                 return Ok(newPlayerId);
             }

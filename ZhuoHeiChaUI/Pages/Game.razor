@@ -1,13 +1,90 @@
 ﻿@page "/game/{gameId:int}"
+@using System.Net.Http
+@inject HttpClient Http
+@using Microsoft.AspNetCore.SignalR.Client
+@inject PlayerHubConnectionService PlayerHubConnection
+@using ZhuoHeiChaShared
+@using ZhuoHeiChaUI.Services
 
-<h3>Game</h3>
+@if (!successJoin)
+{
+    <div>
+    <h3>Enter your name</h3>
+    <button @onclick="AddToGame">Enter</button>
+    <div>
+        <label>Your name</label>
+        <input @bind="@userName" />
+    </div>
+    </div>
+}
+else
+{
+    <p>Wait dealer to start game</p>
+    @if (playerId == "0")
+    {
+        <button @onclick="StartGame">Start Game</button>
+    }
+    // dealer starts the game
+    //{
+    //    <p>Show table and cards</p>
+    //}
+    
+}
+
 
 @code {
     [Parameter]
     public int GameId { get; set; }
+    private string playerId;
+    private string userName;
+    private bool successJoin = false;
 
-    protected override void OnInitialized()
+    private HubConnection _hubConnection;
+
+    protected override async Task OnInitializedAsync()
     {
         Console.WriteLine(GameId);
+        //await AddToGame();
     }
+
+    private async Task AddToGame()
+    {
+        // 1. join player hub (via url)
+        // 2. wait for connection id
+        // 3. call addPlayerToGame
+        // 4. notify successful join
+
+        _hubConnection = new HubConnectionBuilder().WithUrl("https://localhost:7001/playerhub").Build();
+
+        _hubConnection.On<string>(ClientHubMethods.ReceiveConnectionId, async (connectionId) =>
+        {
+        // register the connection in the backend
+            var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
+            {
+                ConnectionId = connectionId,
+                Name = userName
+            });
+
+            if (!response.IsSuccessStatusCode)
+                return;
+            playerId = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
+            successJoin = true;
+            StateHasChanged();
+        });
+
+
+        _hubConnection.On<string>(ClientHubMethods.ReceiveMessage, (message) =>
+        {
+            Console.WriteLine(message);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+    private async Task StartGame()
+    {
+        
+    }
+
 }

@@ -15,7 +15,7 @@ namespace ZhuoHeiChaAPI.Services
         /// <summary>
         /// A list of SignalR connection ids indexed by client id
         /// </summary>
-        private readonly ConcurrentDictionary<string, string> _connectionIdsByClientId = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, Player> _playersByClientId = new ConcurrentDictionary<string, Player>();
 
         private readonly IHubContext<PlayerHub> _hubContext;
 
@@ -34,12 +34,12 @@ namespace ZhuoHeiChaAPI.Services
             throw new NotImplementedException();
         }
 
-        public void RegisterClient(int gameId, int playerId, string connectionId)
+        public void RegisterClient(int gameId, int playerId, Player player)
         {
             var clientId = GetClientId(gameId, playerId);
-            _connectionIdsByClientId[clientId] = connectionId;
+            _playersByClientId[clientId] = player;
 
-            _hubContext.Groups.AddToGroupAsync(connectionId, gameId.ToString());
+            _hubContext.Groups.AddToGroupAsync(player.ConnectionId, gameId.ToString());
 
             // No need to wait here; ignore the warning
             SendMessageToAll(gameId, $"Player {playerId} of game {gameId} just joined!");
@@ -69,7 +69,7 @@ namespace ZhuoHeiChaAPI.Services
 
     public interface IClientNotificationService
     {
-        void RegisterClient(int gameId, int playerId, string connectionId);
+        void RegisterClient(int gameId, int playerId, Player player);
         Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);
