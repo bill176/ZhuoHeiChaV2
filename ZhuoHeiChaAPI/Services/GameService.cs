@@ -47,6 +47,9 @@ namespace ZhuoHeiChaAPI.Services
 
         public int CreateNewGame(int capacity)
         {
+            if(capacity>5 || capacity<3)
+                throw new Exception($"Room capacity should in range 3-5! You are tring to create a game with {capacity} people");
+
             // used Interlocked class here for atomicity
             var newGameId = Interlocked.Increment(ref _gameCounter);
 
