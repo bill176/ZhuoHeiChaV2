@@ -120,7 +120,12 @@ ask players whether ace go public (upon receiving a notification)*@
 
     private async Task StartGame()
     {
-
+        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/init", new { });
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Unable to init game!");
+            return;
+        }
     }
 
     private void DisplayCards()
