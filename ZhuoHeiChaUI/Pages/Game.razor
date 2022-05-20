@@ -50,10 +50,9 @@ ask players whether ace go public (upon receiving a notification)*@
     private string userName;
     private bool successJoin = false;
     private bool canStartGame = false;
-    private IEnumerable<int> cards;
-    (IEnumerable<int>, IEnumerable<int>) CardsPairsBeforeAndAfterPayTribute;        // inital through .On
+    private List<int> cards;
 
-    IEnumerable<int> ReturnTributeList;         // inital through .On
+    List <int> ReturnTributeList;     
 
     private HubConnection _hubConnection;
 
@@ -61,7 +60,7 @@ ask players whether ace go public (upon receiving a notification)*@
     {
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
-        PlayerHubConnection.InitializeCardsBeforeAndAfterPayTribute += DisplayCards;
+        PlayerHubConnection.InitializeGameState += InitialGameState;
     }
 
     private async Task AddToGame()
@@ -96,23 +95,26 @@ ask players whether ace go public (upon receiving a notification)*@
         Console.WriteLine("Game successfully started!");
     }
 
-    private void DisplayCards(object? sender, InitializeCardsBeforeAndAfterPayTributeEventArgs args)
+    private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
     {
-        cards = args.CardsBeforeTribute;
+        cards = args.cardBefore;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your original cards");
-        cards = args.CardsAfterTribute;
+        cards = args.cardAfter;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
-    }
 
-    private void ShowReturnTributeUI(object? sender, ReceiveTributeListEventArgs args)
-    {
-        ReturnTributeList = args.TributeList;
+        ReturnTributeList = args.tributeList;
+        if (ReturnTributeList.Count == 0)
+        {
+            Console.WriteLine("no need to return tribute ");
+            return;
+        }
         Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
     }
+
 
     #region NotificationHandlers
     private void OnNotifyCanStartGame(object? sender, EventArgs args)

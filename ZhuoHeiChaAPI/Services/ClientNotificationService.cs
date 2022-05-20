@@ -73,19 +73,13 @@ namespace ZhuoHeiChaAPI.Services
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.CanStartGame);
         }
 
-        public async Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (List<int>, List<int>) CardsPairsByPlayerId)
+        public async Task SendInitalGamePackage(int gameId, int playerId, InitalGamePackage initalGamePackage)
         {
             var clientId = GetClientId(gameId, playerId);
             var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute, CardsPairsByPlayerId);
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeGameState, initalGamePackage);
         }
 
-        public async Task SendReturnTributeOrderByPlayerId(int gameId, int playerId, IEnumerable<int> ReturnTributeListByPlayerId)
-        {
-            var clientId = GetClientId(gameId, playerId);
-            var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.ReceiveTributeList, ReturnTributeListByPlayerId);
-        }
     }
 
     public interface IClientNotificationService
@@ -93,10 +87,7 @@ namespace ZhuoHeiChaAPI.Services
         void RegisterClient(int gameId, int playerId, Player player);
         Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
 
-        Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (List<int>, List<int>) CardsPairsByPlayerId);
-
-        Task SendReturnTributeOrderByPlayerId(int gameId, int playerId, IEnumerable<int> ReturnTributeListByPlayerId);
-
+        Task SendInitalGamePackage(int gameId, int playerId, InitalGamePackage initalGamePackage);
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);

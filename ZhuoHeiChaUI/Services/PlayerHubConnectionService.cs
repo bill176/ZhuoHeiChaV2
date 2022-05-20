@@ -21,8 +21,7 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
         public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
-        public event EventHandler<InitializeCardsBeforeAndAfterPayTributeEventArgs> InitializeCardsBeforeAndAfterPayTribute;
-        public event EventHandler<ReceiveTributeListEventArgs> ReceiveTributeList;
+        public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
 
         /// <summary>
         /// Sets up and starts the connection to playerhub
@@ -60,7 +59,7 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<string>(ClientHubMethods.ReceiveMessage,
                 (message) => ReceiveMessage?.Invoke(this, new ReceiveMessageEventArgs { Message = message }));
 
-            _connection.On(ClientHubMethods.PlayCard, 
+            _connection.On(ClientHubMethods.PlayCard,
                 () => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs()));
 
             _connection.On(ClientHubMethods.AskAceGoPublic,
@@ -84,17 +83,13 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.CanStartGame,
                 () => NotifyCanStartGame?.Invoke(this, null));
 
-            _connection.On<(List<int>, List<int>)>(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute,
-                (pair) => InitializeCardsBeforeAndAfterPayTribute?.Invoke(this, new InitializeCardsBeforeAndAfterPayTributeEventArgs
+            _connection.On<InitalGamePackage>(ClientHubMethods.InitializeGameState,
+                (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
-                    CardsBeforeTribute = pair.Item1,
-                    CardsAfterTribute = pair.Item2
-                }));
+                    cardAfter = initalGamePackage.CardAfter,
+                    cardBefore = initalGamePackage.CardBefore,
+                    tributeList = initalGamePackage.TributeList
 
-            _connection.On<IEnumerable<int>>(ClientHubMethods.ReceiveTributeList,
-                tributeList => ReceiveTributeList?.Invoke(this, new ReceiveTributeListEventArgs
-                {
-                    TributeList = tributeList
                 }));
         }
     }
