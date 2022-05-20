@@ -140,6 +140,16 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
+        public int GetGameCapacity(int gameId)
+        {
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get capacity for game {gameId}");
+            }
+
+            var game = gameLockPair.Item1;
+            return game.Capacity;
+        }
     }
 
     public interface IGameService
@@ -151,5 +161,6 @@ namespace ZhuoHeiChaAPI.Services
         void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
         IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
+        int GetGameCapacity(int gameId);
     }
 }

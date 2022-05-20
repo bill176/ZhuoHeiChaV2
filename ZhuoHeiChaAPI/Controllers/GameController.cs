@@ -57,6 +57,15 @@ namespace ZhuoHeiChaAPI.Controllers
                 var newPlayerId = _gameService.AddPlayerToGame(gameId);
                 _clientNotificationService.RegisterClient(gameId, newPlayerId, player);
 
+                if (newPlayerId == _gameService.GetGameCapacity(gameId) - 1)
+                {
+                    // this means that the room is now full
+                    // TODO: replace it with a more robust way
+
+                    var hostPlayerId = 0;
+                    _clientNotificationService.NotifyCanStartGame(gameId, hostPlayerId);
+                }
+
                 return Ok(newPlayerId);
             }
             catch (ArgumentException e)
