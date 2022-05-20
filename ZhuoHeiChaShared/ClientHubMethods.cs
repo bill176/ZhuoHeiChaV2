@@ -16,5 +16,7 @@ namespace ZhuoHeiChaShared
         public static readonly string ReturnTribute = nameof(ReturnTribute);
         public static readonly string PlayHandSuccess = nameof(PlayHandSuccess);
         public static readonly string UpdateCards = nameof(UpdateCards);
+        public static readonly string InitializeCardsBeforeAndAfterPayTribute = nameof(InitializeCardsBeforeAndAfterPayTribute);
+        public static readonly string ReceiveTributeList = nameof(ReceiveTributeList);
     }
 }

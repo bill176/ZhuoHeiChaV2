@@ -73,14 +73,18 @@ namespace ZhuoHeiChaAPI.Services
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.CanStartGame);
         }
 
-        public Task SendCardsBeforeAndAfterPayTribute(int gameId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId)
+        public async Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId)
         {
-            throw new NotImplementedException();
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute, CardsPairsByPlayerId);
         }
 
-        public Task SendReturnTributeOrderByPlayerId(int gameId, IEnumerable<int> ReturnTributeListByPlayerId)
+        public async Task SendReturnTributeOrderByPlayerId(int gameId, int playerId, IEnumerable<int> ReturnTributeListByPlayerId)
         {
-            throw new NotImplementedException();
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.ReceiveTributeList, ReturnTributeListByPlayerId);
         }
     }
 
@@ -89,9 +93,9 @@ namespace ZhuoHeiChaAPI.Services
         void RegisterClient(int gameId, int playerId, Player player);
         Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
 
-        Task SendCardsBeforeAndAfterPayTribute(int gameId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId);
+        Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId);
 
-        Task SendReturnTributeOrderByPlayerId(int gameId, IEnumerable<int> ReturnTributeListByPlayerId);
+        Task SendReturnTributeOrderByPlayerId(int gameId, int playerId, IEnumerable<int> ReturnTributeListByPlayerId);
 
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);

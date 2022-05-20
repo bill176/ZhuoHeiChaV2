@@ -118,7 +118,7 @@ namespace ZhuoHeiChaAPI.Controllers
         /// </summary>
         /// <param name="gameId"></param>
         /// <returns></returns>
-        [HttpPost("{gameId:int}/players")]
+        [HttpPost("{gameId:int}/init")]
         public IActionResult InitGame(int gameId)
         {
             try
@@ -134,9 +134,9 @@ namespace ZhuoHeiChaAPI.Controllers
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1);
                     var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2);
-                    _clientNotificationService.SendCardsBeforeAndAfterPayTribute(gameId, (cardBefore, cardAfter));
+                    _clientNotificationService.SendCardsBeforeAndAfterPayTribute(gameId, playerId, (cardBefore, cardAfter));
 
-                    _clientNotificationService.SendReturnTributeOrderByPlayerId(gameId, ReturnTributeListByPlayerId[playerId]);
+                    _clientNotificationService.SendReturnTributeOrderByPlayerId(gameId, playerId, ReturnTributeListByPlayerId[playerId]);
                     // also send last round Ace type list, and this round Ace type list
                 }
                 _logger.LogInformation("finish sending cards info and tribute info to frontend");
