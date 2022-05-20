@@ -78,6 +78,13 @@ namespace ZhuoHeiChaAPI.Services
     {
         void RegisterClient(int gameId, int playerId, Player player);
         Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
+
+        Task SendCardsBeforeAndAfterPayTribute(int gameId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId);
+
+        Task SendReturnTributeOrderByPlayerId(int gameId, IEnumerable<int> ReturnTributeListByPlayerId);
+
+
+
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);

@@ -169,35 +169,35 @@ namespace ZhuoHeiChaCore
         }
 
 
-        private void PayTribute(int payingPlayerId, int receivingPlayerId)
+        private void PayTribute(int payer, int receiver)
         {
-            var tribute = _cardsInHandByPlayerId[payingPlayerId].First(x  =>  x.CardType != CardType.SPADE_ACE);
+            var tribute = _cardsInHandByPlayerId[payer].First(x  =>  x.CardType != CardType.SPADE_ACE);
 
-            _cardsInHandByPlayerId[payingPlayerId].Remove(tribute);
-            _cardsInHandByPlayerId[receivingPlayerId].Add(tribute);
-            _cardsInHandByPlayerId[receivingPlayerId].Sort(Card.ReverseComparator);
+            _cardsInHandByPlayerId[payer].Remove(tribute);
+            _cardsInHandByPlayerId[receiver].Add(tribute);
+            _cardsInHandByPlayerId[receiver].Sort(Card.ReverseComparator);
         }
 
 
-        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards)
+        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int payer, int receiver, IEnumerable<Card> cards)
         {
             var cardList = cards.ToList();
 
             // check if both ids are valid
-            var pairIndex = _tributePairs.FindIndex(p => p.Item1 == sourcePlayerId && p.Item2 == targetPlayerId);
+            var pairIndex = _tributePairs.FindIndex(p => p.Item1 == payer && p.Item2 == receiver);
             if (pairIndex == -1)
-                throw new ArgumentException($"Player {sourcePlayerId} cannot send cards to player {targetPlayerId}!");
+                throw new ArgumentException($"Player {receiver} cannot send cards to player {payer}!");
 
             // check if sourcePlayer has the cards
-            if (!PlayerHasCards(sourcePlayerId, cardList))
-                throw new ArgumentException($"Player {sourcePlayerId} doesn't have all of the following cards: " +
+            if (!PlayerHasCards(receiver, cardList))
+                throw new ArgumentException($"Player {receiver} doesn't have all of the following cards: " +
                     $"{_cardHelper.ConvertCardsToString(cardList)}");
 
             // check if number of cards to be sent is correct
-            var numOfCardsToSend = GetNumOfTributeCards(sourcePlayerId, targetPlayerId);
+            var numOfCardsToSend = GetNumOfTributeCards(payer, receiver);
             if (cardList.Count != numOfCardsToSend)
-                throw new ArgumentException($"Player {sourcePlayerId} is trying to send {cardList.Count} cards to " +
-                    $"{targetPlayerId}. Expecting {numOfCardsToSend} cards.");
+                throw new ArgumentException($"Player {receiver} is trying to send {cardList.Count} cards to " +
+                    $"{payer}. Expecting {numOfCardsToSend} cards.");
 
             // store the returned cards to the buffer
             _returnTributeCardsBuffer.Add(((_tributePairs[pairIndex].Item1, _tributePairs[pairIndex].Item2), cardList));
@@ -234,8 +234,8 @@ namespace ZhuoHeiChaCore
             {
                 foreach (var card in cards)
                 {
-                    _cardsInHandByPlayerId[payer].Remove(card);
-                    _cardsInHandByPlayerId[receiver].Add(card);
+                    _cardsInHandByPlayerId[receiver].Remove(card);
+                    _cardsInHandByPlayerId[payer].Add(card);
                 }
             }
 
@@ -251,7 +251,7 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
-        public AceGoPublicReturn AceGoPublic(int goPublicPlayerId, bool isGoingPublic)
+        public void AceGoPublic(int goPublicPlayerId)
         {
             // check valid or not
             if (!_remainingPlayers.Contains(goPublicPlayerId) || _playerTypeList[goPublicPlayerId] != PlayerType.Ace)
@@ -259,11 +259,7 @@ namespace ZhuoHeiChaCore
                 throw new ArgumentException($"Player {goPublicPlayerId} is not a black ace!");
             }
 
-            if (!isGoingPublic)
-                return new AceGoPublicReturn(AceGoPublicReturnType.NoAction);
-
             _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
-            return new AceGoPublicReturn(AceGoPublicReturnType.PublicAce, goPublicPlayerId);
         }
 
         /// <summary>
@@ -385,7 +381,7 @@ namespace ZhuoHeiChaCore
         InitGameReturnValue InitGame(int numOfDecks = 1);
         Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
-        AceGoPublicReturn AceGoPublic(int goPublicPlayerId, bool isGoingPublic);
+        void AceGoPublic(int goPublicPlayerId);
         PlayHandReturn PlayHand(int playerId, List<Card> UserCard);
     }
 

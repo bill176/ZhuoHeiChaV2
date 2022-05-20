@@ -77,7 +77,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<Card> card)
+        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> card)
         {
             // check if game id is valid
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -89,11 +89,11 @@ namespace ZhuoHeiChaAPI.Services
             var (game, lockObject) = gameLockPair;
             lock (lockObject)
             {
-                return game.ReturnTribute(sourcePlayerId, targetPlayerId, card);
+                return game.ReturnTribute(payer, receiver, card);
             }
         }
 
-        public AceGoPublicReturn AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic)
+        public void AceGoPublic(int gameId, int goPublicPlayerId)
         {
             // add lock
 
@@ -105,7 +105,7 @@ namespace ZhuoHeiChaAPI.Services
             var (game, lockObject) = gameLockPair;
             lock (lockObject)
             {
-                return game.AceGoPublic(goPublicPlayerId, isGoingPublic);
+                game.AceGoPublic(goPublicPlayerId);
             }
         }
 
@@ -155,10 +155,10 @@ namespace ZhuoHeiChaAPI.Services
     public interface IGameService
     {
         InitGameReturnValue InitGame(int gameId, int numOfDecks = 1);
-        Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cardIds);
+        Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> cardIds);
         int AddPlayerToGame(int gameId);
         int CreateNewGame(int capacity);
-        AceGoPublicReturn AceGoPublic(int gameId, int goPublicPlayerId, bool isGoingPublic);
+        void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
         IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
         int GetGameCapacity(int gameId);

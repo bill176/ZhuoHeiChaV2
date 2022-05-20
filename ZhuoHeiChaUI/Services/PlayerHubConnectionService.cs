@@ -57,7 +57,7 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.PlayHandSuccess,
                 () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
 
-            _connection.On(ClientHubMethods.UpdateOpponentCard,
+            _connection.On(ClientHubMethods.UpdateCards,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));
         }
     }
