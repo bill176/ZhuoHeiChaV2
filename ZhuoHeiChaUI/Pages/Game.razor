@@ -61,6 +61,7 @@ ask players whether ace go public (upon receiving a notification)*@
     {
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
+        PlayerHubConnection.InitializeCardsBeforeAndAfterPayTribute += DisplayCards;
     }
 
     private async Task AddToGame()
@@ -95,14 +96,22 @@ ask players whether ace go public (upon receiving a notification)*@
         Console.WriteLine("Game successfully started!");
     }
 
-    private void DisplayCards()
+    private void DisplayCards(object? sender, InitializeCardsBeforeAndAfterPayTributeEventArgs args)
     {
-
+        cards = args.CardsBeforeTribute;
+        Console.WriteLine(string.Join(",", cards));
+        // show cards
+        Console.WriteLine("This is your original cards");
+        cards = args.CardsAfterTribute;
+        Console.WriteLine(string.Join(",", cards));
+        // show cards
+        Console.WriteLine("This is your cards after pay tribute");
     }
 
-    private void ShowReturnTributeUI()
+    private void ShowReturnTributeUI(object? sender, ReceiveTributeListEventArgs args)
     {
-
+        ReturnTributeList = args.TributeList;
+        Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
     }
 
     #region NotificationHandlers

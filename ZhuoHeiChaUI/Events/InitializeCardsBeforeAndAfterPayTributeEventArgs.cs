@@ -7,7 +7,7 @@ namespace ZhuoHeiChaUI.Events
 {
     public class InitializeCardsBeforeAndAfterPayTributeEventArgs : EventArgs
     {
-        public IEnumerable<int> CardsBeforeTribute { get; set; }
-        public IEnumerable<int> CardsAfterTribute { get; set; }
+        public List<int> CardsBeforeTribute { get; set; }
+        public List<int> CardsAfterTribute { get; set; }
     }
 }

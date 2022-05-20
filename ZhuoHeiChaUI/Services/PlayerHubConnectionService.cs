@@ -84,7 +84,7 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.CanStartGame,
                 () => NotifyCanStartGame?.Invoke(this, null));
 
-            _connection.On<(IEnumerable<int>, IEnumerable<int>)>(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute,
+            _connection.On<(List<int>, List<int>)>(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute,
                 (pair) => InitializeCardsBeforeAndAfterPayTribute?.Invoke(this, new InitializeCardsBeforeAndAfterPayTributeEventArgs
                 {
                     CardsBeforeTribute = pair.Item1,

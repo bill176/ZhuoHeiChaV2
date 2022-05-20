@@ -73,7 +73,7 @@ namespace ZhuoHeiChaAPI.Services
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.CanStartGame);
         }
 
-        public async Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId)
+        public async Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (List<int>, List<int>) CardsPairsByPlayerId)
         {
             var clientId = GetClientId(gameId, playerId);
             var connectionId = _playersByClientId[clientId].ConnectionId;
@@ -93,7 +93,7 @@ namespace ZhuoHeiChaAPI.Services
         void RegisterClient(int gameId, int playerId, Player player);
         Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
 
-        Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (IEnumerable<int>, IEnumerable<int>) CardsPairsByPlayerId);
+        Task SendCardsBeforeAndAfterPayTribute(int gameId, int playerId, (List<int>, List<int>) CardsPairsByPlayerId);
 
         Task SendReturnTributeOrderByPlayerId(int gameId, int playerId, IEnumerable<int> ReturnTributeListByPlayerId);
 

@@ -132,8 +132,8 @@ namespace ZhuoHeiChaAPI.Controllers
                 var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
                 foreach(var playerId in CardsPairsByPlayerId.Keys)
                 {
-                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1);
-                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2);
+                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
+                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
                     _clientNotificationService.SendCardsBeforeAndAfterPayTribute(gameId, playerId, (cardBefore, cardAfter));
 
                     _clientNotificationService.SendReturnTributeOrderByPlayerId(gameId, playerId, ReturnTributeListByPlayerId[playerId]);
