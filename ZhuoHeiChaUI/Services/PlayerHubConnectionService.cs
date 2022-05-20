@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ZhuoHeiChaUI.Events;
 using ZhuoHeiChaShared;
@@ -9,8 +10,10 @@ namespace ZhuoHeiChaUI.Services
     public class PlayerHubConnectionService
     {
         private HubConnection _connection;
+        public string ConnectionId { get; private set; }
 
         public event EventHandler<ReceiveMessageEventArgs> ReceiveMessage;
+        public event EventHandler NotifyCanStartGame;
         public event EventHandler<NotifyPlayCardEventArgs> NotifyPlayCard;
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
         public event EventHandler<NotifyAskAceGoPublicEventArgs> NotifyAskAceGoPublic;
@@ -18,14 +21,32 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
         public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
+        public event EventHandler<InitializeCardsBeforeAndAfterPayTributeEventArgs> InitializeCardsBeforeAndAfterPayTribute;
+        public event EventHandler<ReceiveTributeListEventArgs> ReceiveTributeList;
 
-        public async Task EstablishConnection()
+        /// <summary>
+        /// Sets up and starts the connection to playerhub
+        /// </summary>
+        /// <returns>The connection id</returns>
+        public async Task<string> EstablishConnection()
         {
             _connection = new HubConnectionBuilder().WithUrl("https://localhost:7001/playerhub").Build();
 
             RegisterEventListeners();
 
+            // get ConnectionId
+            var tcs = new TaskCompletionSource<string>();
+            var task = tcs.Task;
+            _connection.On<string>(ClientHubMethods.ReceiveConnectionId, connectionId =>
+            {
+                tcs.SetResult(connectionId);
+            });
+
             await _connection.StartAsync();
+
+            // wait for Hub to send ReceiveConnectionId notification
+            ConnectionId = await task;
+            return ConnectionId;
         }
 
         // for testing only!
@@ -59,6 +80,22 @@ namespace ZhuoHeiChaUI.Services
 
             _connection.On(ClientHubMethods.UpdateCards,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));
+
+            _connection.On(ClientHubMethods.CanStartGame,
+                () => NotifyCanStartGame?.Invoke(this, null));
+
+            _connection.On<(IEnumerable<int>, IEnumerable<int>)>(ClientHubMethods.InitializeCardsBeforeAndAfterPayTribute,
+                (pair) => InitializeCardsBeforeAndAfterPayTribute?.Invoke(this, new InitializeCardsBeforeAndAfterPayTributeEventArgs
+                {
+                    CardsBeforeTribute = pair.Item1,
+                    CardsAfterTribute = pair.Item2
+                }));
+
+            _connection.On<IEnumerable<int>>(ClientHubMethods.ReceiveTributeList,
+                tributeList => ReceiveTributeList?.Invoke(this, new ReceiveTributeListEventArgs
+                {
+                    TributeList = tributeList
+                }));
         }
     }
 }

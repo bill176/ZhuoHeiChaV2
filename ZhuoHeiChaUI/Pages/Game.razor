@@ -59,64 +59,30 @@ ask players whether ace go public (upon receiving a notification)*@
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine(GameId);
-        //await AddToGame();
+        PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
+        PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
     }
 
     private async Task AddToGame()
     {
-        // 1. join player hub (via url)
-        // 2. wait for connection id
-        // 3. call addPlayerToGame
-        // 4. notify successful join
+        //_hubConnection.On<IEnumerable<int>>(ClientHubMethods.UpdateCards, (updatedCards) =>
+        //{
+        //    cards = updatedCards;
+        //});
 
-        _hubConnection = new HubConnectionBuilder().WithUrl("https://localhost:7001/playerhub").Build();
-
-        _hubConnection.On<string>(ClientHubMethods.ReceiveConnectionId, async (connectionId) =>
+        var connectionId = await PlayerHubConnection.EstablishConnection();
+        var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
         {
-            // register the connection in the backend
-            var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
-            {
-                ConnectionId = connectionId,
-                Name = userName
-            });
-
-            if (!response.IsSuccessStatusCode)
-                return;
-            playerId = await response.Content.ReadAsStringAsync();
-
-            Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
-            successJoin = true;
-            StateHasChanged();
+            ConnectionId = connectionId,
+            Name = userName
         });
+        if (!response.IsSuccessStatusCode) return;
 
-        _hubConnection.On(ClientHubMethods.CanStartGame, OnNotifyCanStartGame);
-
-        _hubConnection.On<string>(ClientHubMethods.ReceiveMessage, (message) =>
-        {
-            Console.WriteLine(message);
-        });
-
-        _hubConnection.On<IEnumerable<int>>(ClientHubMethods.UpdateCards, (updatedCards) =>
-        {
-            cards = updatedCards;
-        });
-
-        await _hubConnection.StartAsync();
-    }
-
-    private void OnNotifyCanStartGame()
-    {
-        if (playerId != "0")
-        {
-            Console.WriteLine("Non-host player should not receive this notification!");
-            return;
-        }
-
-        canStartGame = true;
+        playerId = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
+        successJoin = true;
         StateHasChanged();
     }
-
 
     private async Task StartGame()
     {
@@ -126,6 +92,7 @@ ask players whether ace go public (upon receiving a notification)*@
             Console.WriteLine("Unable to init game!");
             return;
         }
+        Console.WriteLine("Game successfully started!");
     }
 
     private void DisplayCards()
@@ -137,5 +104,24 @@ ask players whether ace go public (upon receiving a notification)*@
     {
 
     }
+
+    #region NotificationHandlers
+    private void OnNotifyCanStartGame(object? sender, EventArgs args)
+    {
+        if (playerId != "0")
+        {
+            Console.WriteLine("Non-host player should not receive this notification!");
+            return;
+        }
+
+        canStartGame = true;
+        StateHasChanged();
+    }
+
+    private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
+    {
+        Console.WriteLine(args.Message);
+    }
+    #endregion
 
 }
