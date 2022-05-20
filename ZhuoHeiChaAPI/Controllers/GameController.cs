@@ -104,6 +104,43 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Initial game + send cards info and tribute info to frontend
+        /// </summary>
+        /// <param name="gameId"></param>
+        /// <returns></returns>
+        [HttpPost("{gameId:int}/players")]
+        public IActionResult InitGame(int gameId)
+        {
+            try
+            {
+                // Initial Game
+                var initGameReturn = _gameService.InitGame(gameId);
+                _logger.LogInformation($"Initial game: {gameId}");
+
+                // send cards info and tribute info to frontend
+                var CardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
+                var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
+                foreach(var playerId in CardsPairsByPlayerId.Keys)
+                {
+                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1);
+                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2);
+                    _clientNotificationService.SendCardsBeforeAndAfterPayTribute(gameId, (cardBefore, cardAfter));
+
+                    _clientNotificationService.SendReturnTributeOrderByPlayerId(gameId, ReturnTributeListByPlayerId[playerId]);
+                    // also send last round Ace type list, and this round Ace type list
+                }
+                _logger.LogInformation("finish sending cards info and tribute info to frontend");
+
+                return Ok(gameId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Error in {nameof(InitGame)}!");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
         //localhost:5000/api/game/5/returntribute
         //body:
         //    sourcePlayerId: 1,
@@ -111,20 +148,20 @@ namespace ZhuoHeiChaAPI.Controllers
         //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
-        public async Task<IActionResult> ReturnTribute(int gameId, int sourcePlayerId, int targetPlayerId, IEnumerable<int> card_id) 
+        public async Task<IActionResult> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<int> card_id) 
         {
             try
             {
                 // convert sharedcard(frontend) to Card (backend)
                 var cards = _cardHelper.ConvertIdsToCards(card_id);
 
-                var updatedCardsByPlayer = _gameService.ReturnTribute(gameId, sourcePlayerId, targetPlayerId, cards);
+                var cardsAfteReturnTribute = _gameService.ReturnTribute(gameId, payer, receiver, cards);
 
-                if (updatedCardsByPlayer.Count != 0)    // the last player has finished pay tribute
+                if (cardsAfteReturnTribute.Count != 0)    // the last player has finished pay tribute
                 {
 
-                    foreach (var playerId in updatedCardsByPlayer.Keys)
-                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(updatedCardsByPlayer[playerId]));
+                    foreach (var playerId in cardsAfteReturnTribute.Keys)
+                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfteReturnTribute[playerId]));
 
                     // notify ace go public
                     var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();

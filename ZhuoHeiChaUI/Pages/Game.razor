@@ -32,12 +32,26 @@ else
 }
 
 
+
+
+
+@*decide return tribute process by ReturnTributeListByPlayerId
+tell player number of cards to be returned
+show cards after return tribute, based on _clientNotificationService.SendCardUpdate
+ask players whether ace go public (upon receiving a notification)*@
+
+
+
 @code {
     [Parameter]
     public int GameId { get; set; }
     private string playerId;
     private string userName;
     private bool successJoin = false;
+    private IEnumerable<int> cards;
+    (IEnumerable<int>, IEnumerable<int>) CardsPairsBeforeAndAfterPayTribute;        // inital through .On
+
+    IEnumerable<int> ReturnTributeList;         // inital through .On
 
     private HubConnection _hubConnection;
 
@@ -80,9 +94,24 @@ else
             Console.WriteLine(message);
         });
 
+        _hubConnection.On<IEnumerable<int>>(ClientHubMethods.UpdateCards, (updatedCards) =>
+        {
+            cards = updatedCards;
+        });
+
         await _hubConnection.StartAsync();
     }
     private async Task StartGame()
+    {
+
+    }
+
+    private void DisplayCards()
+    {
+
+    }
+
+    private void ShowReturnTributeUI()
     {
         
     }
