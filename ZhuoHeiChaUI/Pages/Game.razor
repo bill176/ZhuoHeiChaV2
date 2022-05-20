@@ -22,7 +22,7 @@ else
     <p>Wait dealer to start game</p>
     @if (playerId == "0")
     {
-        <button @onclick="StartGame">Start Game</button>
+        <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
     // dealer starts the game
     //{
@@ -38,6 +38,7 @@ else
     private string playerId;
     private string userName;
     private bool successJoin = false;
+    private bool canStartGame = false;
 
     private HubConnection _hubConnection;
 
@@ -58,7 +59,7 @@ else
 
         _hubConnection.On<string>(ClientHubMethods.ReceiveConnectionId, async (connectionId) =>
         {
-        // register the connection in the backend
+            // register the connection in the backend
             var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
             {
                 ConnectionId = connectionId,
@@ -74,6 +75,7 @@ else
             StateHasChanged();
         });
 
+        _hubConnection.On(ClientHubMethods.CanStartGame, OnNotifyCanStartGame);
 
         _hubConnection.On<string>(ClientHubMethods.ReceiveMessage, (message) =>
         {
@@ -82,9 +84,23 @@ else
 
         await _hubConnection.StartAsync();
     }
+
+    private void OnNotifyCanStartGame()
+    {
+        if (playerId != "0")
+        {
+            Console.WriteLine("Non-host player should not receive this notification!");
+            return;
+        }
+
+        canStartGame = true;
+        StateHasChanged();
+    }
+
+
     private async Task StartGame()
     {
-        
+
     }
 
 }

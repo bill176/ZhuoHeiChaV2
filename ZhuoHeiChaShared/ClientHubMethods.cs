@@ -8,6 +8,7 @@ namespace ZhuoHeiChaShared
     {
         public static readonly string ReceiveConnectionId = nameof(ReceiveConnectionId);
         public static readonly string ReceiveMessage = nameof(ReceiveMessage);
+        public static readonly string CanStartGame = nameof(CanStartGame);
         public static readonly string PlayCard = nameof(PlayCard);
         public static readonly string AceGoPublic = nameof(AceGoPublic);
         public static readonly string AskAceGoPublic = nameof(AskAceGoPublic);

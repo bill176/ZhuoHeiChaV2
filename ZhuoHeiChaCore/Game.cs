@@ -12,6 +12,7 @@ namespace ZhuoHeiChaCore
         protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
 
         public IEnumerable<PlayerType> PlayerTypeList => _playerTypeList;
+        public int Capacity => _capacity;
 
         protected readonly List<int> _remainingPlayers = new List<int>();
         protected readonly List<(int, int)> _tributePairs = new List<(int, int)>();
@@ -379,6 +380,7 @@ namespace ZhuoHeiChaCore
     {
         
         IEnumerable<PlayerType> PlayerTypeList { get; }
+        int Capacity { get; }
 
         InitGameReturnValue InitGame(int numOfDecks = 1);
         Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);

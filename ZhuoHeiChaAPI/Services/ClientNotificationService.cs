@@ -65,6 +65,13 @@ namespace ZhuoHeiChaAPI.Services
         {
             return gameId.ToString() + ":" + playerId.ToString();
         }
+
+        public async Task NotifyCanStartGame(int gameId, int playerId)
+        {
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.CanStartGame);
+        }
     }
 
     public interface IClientNotificationService
@@ -75,6 +82,7 @@ namespace ZhuoHeiChaAPI.Services
         Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);
         Task AskAllAceGoPublic(int gameId, int playerId, PlayerType playerType);
+        Task NotifyCanStartGame(int gameId, int playerId);
 
         // TODO: complete this list for things such as NotifyAceGoPublic, NotifyCardsBeforeTribute, etc.
     }
