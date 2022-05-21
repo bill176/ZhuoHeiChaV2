@@ -132,11 +132,13 @@ namespace ZhuoHeiChaAPI.Controllers
                 var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
                 foreach(var playerId in CardsPairsByPlayerId.Keys)
                 {
-                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1);
-                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2);
-                    _clientNotificationService.SendCardsBeforeAndAfterPayTribute(gameId, playerId, (cardBefore, cardAfter));
+                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
+                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
+                    var tributeList = ReturnTributeListByPlayerId[playerId].ToList();
+                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, TributeList= tributeList };
 
-                    _clientNotificationService.SendReturnTributeOrderByPlayerId(gameId, playerId, ReturnTributeListByPlayerId[playerId]);
+                    _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
+
                     // also send last round Ace type list, and this round Ace type list
                 }
                 _logger.LogInformation("finish sending cards info and tribute info to frontend");
