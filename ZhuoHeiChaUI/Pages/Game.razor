@@ -6,6 +6,7 @@
 @using ZhuoHeiChaShared
 @using ZhuoHeiChaUI.Services
 @using ZhuoHeiChaUI.Events
+@using ZhuoHeiChaUI.Components
 
 @if (!successJoin)
 {
@@ -20,7 +21,9 @@
 }
 else
 {
-    <p>Wait dealer to start game</p>
+    <p>Wait dealer to start game...</p>
+    <p>Current player(s):</p>
+    <WaitingPlayerList Players="@players" />
     @if (playerId == "0")
     {
         <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
@@ -29,7 +32,6 @@ else
     //{
     //    <p>Show table and cards</p>
     //}
-    
 }
 
 
@@ -46,10 +48,12 @@ ask players whether ace go public (upon receiving a notification)*@
 @code {
     [Parameter]
     public int GameId { get; set; }
+
     private string playerId;
     private string userName;
     private bool successJoin = false;
     private bool canStartGame = false;
+    private List<Player> players = new List<Player>();
     private List<int> cards;
 
     List <int> ReturnTributeList;     
@@ -60,6 +64,7 @@ ask players whether ace go public (upon receiving a notification)*@
     {
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
+        PlayerHubConnection.NotifyNewPlayerAdded += OnNotifyNewPlayerAdded;
         PlayerHubConnection.InitializeGameState += InitialGameState;
     }
 
@@ -132,6 +137,12 @@ ask players whether ace go public (upon receiving a notification)*@
     private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
     {
         Console.WriteLine(args.Message);
+    }
+
+    private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
+    {
+        players = args.UpdatedPlayers;
+        StateHasChanged();
     }
     #endregion
 

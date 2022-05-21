@@ -17,5 +17,6 @@ namespace ZhuoHeiChaShared
         public static readonly string PlayHandSuccess = nameof(PlayHandSuccess);
         public static readonly string UpdateCards = nameof(UpdateCards);
         public static readonly string InitializeGameState = nameof(InitializeGameState);
+        public static readonly string NewPlayerAdded = nameof(NewPlayerAdded);
     }
 }

@@ -1,0 +1,13 @@
+﻿@using ZhuoHeiChaShared
+
+<ul>
+    @foreach (var p in Players)
+    {
+        <li>@(p.Name)</li>
+    }
+</ul>
+
+@code {
+    [Parameter]
+    public List<Player> Players { get; set; }
+}
