@@ -6,6 +6,7 @@
 @using ZhuoHeiChaShared
 @using ZhuoHeiChaUI.Services
 @using ZhuoHeiChaUI.Events
+@using ZhuoHeiChaUI.Components
 
 @if (!successJoin)
 {
@@ -25,11 +26,20 @@ else
     {
         <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
+
     // dealer starts the game
     //{
     //    <p>Show table and cards</p>
     //}
+    @if (ReturnTributeFlag == 1)
+    {
+        <ReturnTributeComponent @bind-cardsToBeReturned="@cardsToBeReturned"></ReturnTributeComponent>
+    }
+                
     
+    
+
+
 }
 
 
@@ -46,13 +56,19 @@ ask players whether ace go public (upon receiving a notification)*@
 @code {
     [Parameter]
     public int GameId { get; set; }
+    public List<int> cardsToBeReturned { get; set; } = null;
     private string playerId;
     private string userName;
     private bool successJoin = false;
     private bool canStartGame = false;
     private List<int> cards;
 
-    List <int> ReturnTributeList;     
+
+
+    List<int> ReturnTributeList;
+    List<int> PlayerTypeListLastRound;
+    List<int> PlayerTypeListThisRound;
+    int ReturnTributeFlag;
 
     private HubConnection _hubConnection;
 
@@ -107,13 +123,46 @@ ask players whether ace go public (upon receiving a notification)*@
         Console.WriteLine("This is your cards after pay tribute");
 
         ReturnTributeList = args.tributeList;
+
+        //  for est #############################
+        ReturnTributeList = new List<int>(new int[] { 1, 2} );
+
+        PlayerTypeListLastRound = args.PlayerTypeListLastRound;
+        PlayerTypeListThisRound = args.PlayerTypeListThisRound;
+        StartReturnTribute();
+
+    }
+
+    private async Task StartReturnTribute()
+    {
         if (ReturnTributeList.Count == 0)
         {
             Console.WriteLine("no need to return tribute ");
             return;
         }
         Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
+        foreach (var payer in ReturnTributeList)
+        {
+            HttpResponseMessage response = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            do
+            {
+                
+                ReturnTributeFlag = 1;
+                StateHasChanged();
+                var returnCardsCount = Math.Max(PlayerTypeListLastRound[Int32.Parse(playerId)], PlayerTypeListLastRound[payer]);
+                Console.WriteLine($"now, return {returnCardsCount} cards to {payer}");
+
+                // response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute", playerId, payer, cardsToBeReturned);
+            } while(!response.IsSuccessStatusCode);
+
+            ReturnTributeFlag = 0;
+            StateHasChanged();
+            //Console.WriteLine($"successfully return cards to {payer}!");
+        }
+        
+        Console.WriteLine("Finish return tribute!");
     }
+
 
 
     #region NotificationHandlers

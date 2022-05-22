@@ -101,6 +101,7 @@ namespace ZhuoHeiChaCore
 
             _finishOrder.Clear();
             // initialize player type list list based on cards in hand
+            var playerTypeListLastRound = _playerTypeList;
             foreach (var kvp in _cardsInHandByPlayerId)
                 _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
 
@@ -129,7 +130,10 @@ namespace ZhuoHeiChaCore
             return new InitGameReturnValue
             {
                 CardsPairsByPlayerId = cardsPairByPlayerId,
-                ReturnTributeListByPlayerId = returnTributeListByPlayerId
+                ReturnTributeListByPlayerId = returnTributeListByPlayerId,
+                PlayerTypeListLastRound = playerTypeListLastRound,
+                PlayerTypeListThisRound = _playerTypeList
+                
             };
         }
 

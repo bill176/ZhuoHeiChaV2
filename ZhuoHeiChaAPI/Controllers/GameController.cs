@@ -130,12 +130,14 @@ namespace ZhuoHeiChaAPI.Controllers
                 // send cards info and tribute info to frontend
                 var CardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
                 var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
-                foreach(var playerId in CardsPairsByPlayerId.Keys)
+                var PlayerTypeListLastRound = initGameReturn.PlayerTypeListLastRound.Select(p => ((int)p)).ToList();
+                var PlayerTypeListThisRound = initGameReturn.PlayerTypeListThisRound.Select(p => ((int)p)).ToList();
+                foreach (var playerId in CardsPairsByPlayerId.Keys)
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
                     var tributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, TributeList= tributeList };
+                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, TributeList= tributeList, PlayerTypeListLastRound = PlayerTypeListLastRound, PlayerTypeListThisRound = PlayerTypeListThisRound};
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
@@ -159,7 +161,7 @@ namespace ZhuoHeiChaAPI.Controllers
         //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
-        public async Task<IActionResult> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<int> card_id) 
+        public async Task<IActionResult> ReturnTribute(int gameId, int payer, int receiver, List<int> card_id) 
         {
             try
             {

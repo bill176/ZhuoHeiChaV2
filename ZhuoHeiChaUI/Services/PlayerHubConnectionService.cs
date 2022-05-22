@@ -88,7 +88,9 @@ namespace ZhuoHeiChaUI.Services
                 {
                     cardAfter = initalGamePackage.CardAfter,
                     cardBefore = initalGamePackage.CardBefore,
-                    tributeList = initalGamePackage.TributeList
+                    tributeList = initalGamePackage.TributeList,
+                    PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound,
+                    PlayerTypeListLastRound = initalGamePackage.PlayerTypeListLastRound
 
                 }));
         }

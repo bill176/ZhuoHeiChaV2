@@ -1,0 +1,25 @@
+﻿<div>
+    <h3>enter the cards you want to return "," to split</h3>
+    <button @onclick="Return">Enter</button>
+    <div>
+        <input @bind="@cardsNumber" />
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public List<int> cardsToBeReturned { get; set; }
+
+    [Parameter]
+    public EventCallback<List<int>> cardsToBeReturnedChanged { get; set; }  
+
+
+    public string cardsNumber;
+
+    private void Return()
+    {
+
+        cardsToBeReturned.AddRange(cardsNumber.Split(',').Select(Int32.Parse).ToList());
+    }
+}
