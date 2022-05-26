@@ -9,8 +9,6 @@ namespace ZhuoHeiChaUI.Events
     {
         public List<int> cardBefore;
         public List<int> cardAfter;
-        public List<int> tributeList;
-        public List<int> PlayerTypeListLastRound;
         public List<int> PlayerTypeListThisRound;
     }
 }

@@ -130,20 +130,67 @@ namespace ZhuoHeiChaAPI.Controllers
                 // send cards info and tribute info to frontend
                 var CardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
                 var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
-                var PlayerTypeListLastRound = initGameReturn.PlayerTypeListLastRound.Select(p => ((int)p)).ToList();
+                var cardsToBeReturnCount = initGameReturn.cardsToBeReturnCount;
                 var PlayerTypeListThisRound = initGameReturn.PlayerTypeListThisRound.Select(p => ((int)p)).ToList();
+
+                // send initial data
                 foreach (var playerId in CardsPairsByPlayerId.Keys)
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
-                    var tributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, TributeList= tributeList, PlayerTypeListLastRound = PlayerTypeListLastRound, PlayerTypeListThisRound = PlayerTypeListThisRound};
+                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, PlayerTypeListThisRound = PlayerTypeListThisRound};
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
-                    // also send last round Ace type list, and this round Ace type list
                 }
-                _logger.LogInformation("finish sending cards info and tribute info to frontend");
+
+
+                // return tribute
+                // initial flag value
+                foreach (var playerId in ReturnTributeListByPlayerId.Keys) 
+                {
+                    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
+                    foreach (var payer in ReturnTributeList) 
+                    {
+                        _gameService.setFlag(gameId, playerId, payer, false);
+                    }
+                }
+
+                // start return tribute one by one
+                foreach (var playerId in ReturnTributeListByPlayerId.Keys)
+                {
+                    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
+                    var cardsToBeReturnCountList = cardsToBeReturnCount[playerId].ToList();
+
+                    foreach (var payer in ReturnTributeList)
+                    {
+                        while (!_gameService.getFlag(gameId, playerId, payer))
+                        {
+                            _clientNotificationService.NotifyReturnTribute(gameId, playerId, payer, cardsToBeReturnCountList[payer]);
+                            System.Threading.Thread.Sleep(10000);
+                        }
+                            }
+
+
+                }
+                //Parallel.ForEach(ReturnTributeListByPlayerId.Keys, (playerId) =>
+                //{
+                //    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
+                //    var cardsToBeReturnCountList = cardsToBeReturnCount[playerId].ToList();
+
+                //    foreach (var payer in ReturnTributeList)
+                //    {
+                //        bool finish_return = false;
+                //        _clientNotificationService.NotifyReturnTribute(gameId, playerId, payer, cardsToBeReturnCountList[payer]);
+                //    }
+
+
+                //}
+                //);
+
+
+
+                _logger.LogInformation("finish sending cards info to frontend + return tribute finished");
 
                 return Ok(gameId);
             }
@@ -154,6 +201,7 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+
         //localhost:5000/api/game/5/returntribute
         //body:
         //    sourcePlayerId: 1,
@@ -161,25 +209,31 @@ namespace ZhuoHeiChaAPI.Controllers
         //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
-        public async Task<IActionResult> ReturnTribute(int gameId, int payer, int receiver, List<int> card_id) 
+        public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString) 
         {
+            var card_id = cardsToBeReturnedString.Split(',').Select(Int32.Parse);
             try
             {
                 // convert sharedcard(frontend) to Card (backend)
                 var cards = _cardHelper.ConvertIdsToCards(card_id);
 
-                var cardsAfteReturnTribute = _gameService.ReturnTribute(gameId, payer, receiver, cards);
 
-                if (cardsAfteReturnTribute.Count != 0)    // the last player has finished pay tribute
+                var returnTributeReturnValue = _gameService.ReturnTribute(gameId, payer, receiver, cards);
+                var cardsAfterReturnTribute = returnTributeReturnValue.cardsAfterReturnTribute;
+                var returnTributeValid = returnTributeReturnValue.returnTributeValid;
+
+                // if returned cards are valid, change flag value and begin returning cards to next payer.
+                if (returnTributeValid) 
                 {
+                    _gameService.setFlag(gameId, receiver, payer, true); 
+                }
 
-                    foreach (var playerId in cardsAfteReturnTribute.Keys)
-                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfteReturnTribute[playerId]));
+                if (cardsAfterReturnTribute.Count != 0)    // the last player has finished pay tribute
+                {
+                    foreach (var playerId in cardsAfterReturnTribute.Keys)
+                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfterReturnTribute[playerId]).ToList());
 
-                    // notify ace go public
-                    var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
-                    for (var id = 0; id < playerTypeList.Count; ++id)
-                        await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
+                    
                 }
 
                 return Ok();
@@ -194,6 +248,14 @@ namespace ZhuoHeiChaAPI.Controllers
                 _logger.LogError(e, "Exception");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
+        }
+
+        private void StartAceGoPublic(int gameId) 
+        {
+            // notify ace go public
+            var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
+            for (var id = 0; id < playerTypeList.Count; ++id)
+                await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
         }
 
 

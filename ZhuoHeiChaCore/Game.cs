@@ -9,7 +9,11 @@ namespace ZhuoHeiChaCore
     {
         protected int _capacity;
         protected readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
-        protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        //protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        // ############## for test only ###################
+        protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>{PlayerType.Ace, PlayerType.Normal, PlayerType.Normal };      // 0 not Ace; 1 is Ace not public; 2 public Ace
+        // ###################################
+
 
         public IEnumerable<PlayerType> PlayerTypeList => _playerTypeList;
         public int Capacity => _capacity;
@@ -94,6 +98,12 @@ namespace ZhuoHeiChaCore
             // generate tribute list
             var tributePairs = GetTributePairs();
             _tributePairs.Clear();
+
+
+            // ############## for test only #################
+            tributePairs = new List<(int, int)> {(1,0), (2,0) };
+            // ################################################
+
             _tributePairs.AddRange(tributePairs);
 
             // send tribute
@@ -101,7 +111,6 @@ namespace ZhuoHeiChaCore
 
             _finishOrder.Clear();
             // initialize player type list list based on cards in hand
-            var playerTypeListLastRound = _playerTypeList;
             foreach (var kvp in _cardsInHandByPlayerId)
                 _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
 
@@ -120,18 +129,22 @@ namespace ZhuoHeiChaCore
                 cardsPairByPlayerId[playerId] = (cardsBeforeTributeByPlayerId[playerId], cardsAfterTribute);
             }
 
-            // TODO: start return tribute
+
             var returnTributeListByPlayerId = new Dictionary<int, IEnumerable<int>>();
+            var cardsToBeReturnCount = new Dictionary<int, IEnumerable<int>>();
+
             foreach (var playerId in _remainingPlayers)
             {
                 returnTributeListByPlayerId[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => p.Item1);
+                cardsToBeReturnCount[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => GetNumOfTributeCards(p.Item1, p.Item2));
+                
             }
 
             return new InitGameReturnValue
             {
                 CardsPairsByPlayerId = cardsPairByPlayerId,
                 ReturnTributeListByPlayerId = returnTributeListByPlayerId,
-                PlayerTypeListLastRound = playerTypeListLastRound,
+                cardsToBeReturnCount = cardsToBeReturnCount,
                 PlayerTypeListThisRound = _playerTypeList
                 
             };
@@ -161,8 +174,8 @@ namespace ZhuoHeiChaCore
         {
             foreach (var (paying, receiving) in _tributePairs)
             {
-                var numOfTributeCards = GetNumOfTributeCards(paying, receiving);
-                for (int i = 0; i < numOfTributeCards; i++)
+                var cardsToBeReturnCount = GetNumOfTributeCards(paying, receiving);
+                for (int i = 0; i < cardsToBeReturnCount; i++)
                     PayTribute(paying, receiving);
             }
         }
@@ -183,7 +196,7 @@ namespace ZhuoHeiChaCore
         }
 
 
-        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int payer, int receiver, IEnumerable<Card> cards)
+        public ReturnTributeReturnValue ReturnTribute(int payer, int receiver, IEnumerable<Card> cards)
         {
             var cardList = cards.ToList();
 
@@ -203,6 +216,7 @@ namespace ZhuoHeiChaCore
                 throw new ArgumentException($"Player {receiver} is trying to send {cardList.Count} cards to " +
                     $"{payer}. Expecting {numOfCardsToSend} cards.");
 
+
             // store the returned cards to the buffer
             _returnTributeCardsBuffer.Add(((_tributePairs[pairIndex].Item1, _tributePairs[pairIndex].Item2), cardList));
 
@@ -210,11 +224,15 @@ namespace ZhuoHeiChaCore
             _tributePairs.RemoveAt(pairIndex);
 
             // process the buffer if all tributes have been sent
-            var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
+            var cardsAfterReturnTribute = new Dictionary<int, IEnumerable<Card>>();
             if (_tributePairs.Count == 0)
-                playerCardsDictionary = ProcessTributeBuffer();
+                cardsAfterReturnTribute = ProcessTributeBuffer();
 
-            return playerCardsDictionary;
+            return new ReturnTributeReturnValue
+            {
+                cardsAfterReturnTribute = cardsAfterReturnTribute,
+                returnTributeValid = true
+            };
         }
 
         /// <summary>
@@ -383,7 +401,7 @@ namespace ZhuoHeiChaCore
         int Capacity { get; }
 
         InitGameReturnValue InitGame(int numOfDecks = 1);
-        Dictionary<int, IEnumerable<Card>> ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
+        ReturnTributeReturnValue ReturnTribute(int sourcePlayerId, int targetPlayerId, IEnumerable<Card> cards);
         int AddPlayer();
         void AceGoPublic(int goPublicPlayerId);
         PlayHandReturn PlayHand(int playerId, List<Card> UserCard);

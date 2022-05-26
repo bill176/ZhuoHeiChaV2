@@ -1,6 +1,6 @@
 ﻿<div>
-    <h3>enter the cards you want to return "," to split</h3>
-    <button @onclick="Return">Enter</button>
+    <label>Please select @cardsCountReturnToPayer cards as your return cards to player @payer <br/> enter the cards you want to return use "," to split</label>
+    <button @onclick="CardsToBeReturn">Enter</button>
     <div>
         <input @bind="@cardsNumber" />
     </div>
@@ -9,17 +9,28 @@
 @code {
 
     [Parameter]
-    public List<int> cardsToBeReturned { get; set; }
+    public Func<List<int>, Task> OnClick { get; set; }
 
     [Parameter]
-    public EventCallback<List<int>> cardsToBeReturnedChanged { get; set; }  
+    public int payer { get; set; }
+
+    [Parameter]
+    public int cardsCountReturnToPayer { get; set; }
+
+    //[Parameter]
+    //public EventCallback<List<int>> cardsToBeReturnedChanged { get; set; }  
 
 
     public string cardsNumber;
 
-    private void Return()
-    {
+    //private async Task CardsToBeReturn()
+    //{
+    //    cardsToBeReturned.AddRange(cardsNumber.Split(',').Select(Int32.Parse).ToList());
+    //    await cardsToBeReturnedChanged.InvokeAsync( cardsToBeReturned );
+    //}
 
-        cardsToBeReturned.AddRange(cardsNumber.Split(',').Select(Int32.Parse).ToList());
+    private void CardsToBeReturn()
+    {
+        OnClick(cardsNumber.Split(',').Select(Int32.Parse).ToList());
     }
 }

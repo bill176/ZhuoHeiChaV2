@@ -11,12 +11,42 @@ namespace ZhuoHeiChaAPI.Services
 {
     public class GameService : IGameService
     {
+        private Dictionary<int, Dictionary<int, Dictionary<int, bool>>> FinishedReturnTributeFlagsDictionary = new Dictionary<int, Dictionary<int, Dictionary<int, bool>>>();
+
         private int _gameCounter;
         private readonly ConcurrentDictionary<int, (IGame, object)> _gameSessions = new ConcurrentDictionary<int, (IGame, object)>();
 
         private readonly ILogger<GameService> _logger;
         private readonly ICardHelper _cardHelper;
         private readonly IGameFactory _gameFactory;
+
+        public bool getFlag(int a, int b, int c) 
+        {
+            return FinishedReturnTributeFlagsDictionary[a][b][c];
+        }
+        public void setFlag(int a, int b, int c, bool flag) {
+
+            if (!FinishedReturnTributeFlagsDictionary.ContainsKey(a))
+            {
+                FinishedReturnTributeFlagsDictionary[a] = new Dictionary<int, Dictionary<int, bool>>();
+                FinishedReturnTributeFlagsDictionary[a][b] = new Dictionary<int, bool>();
+                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
+            }
+            else if ((!FinishedReturnTributeFlagsDictionary[a].ContainsKey(b))) 
+            {
+                FinishedReturnTributeFlagsDictionary[a][b] = new Dictionary<int, bool>();
+                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
+            }
+            else if ((!FinishedReturnTributeFlagsDictionary[a][b].ContainsKey(c)))
+            {
+                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
+            }
+            else
+                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
+
+
+        }
+
 
         public GameService(ILogger<GameService> logger, ICardHelper cardHelper, IGameFactory gameFactory)
         {
@@ -77,7 +107,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> card)
+        public ReturnTributeReturnValue ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> card)
         {
             // check if game id is valid
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -155,12 +185,14 @@ namespace ZhuoHeiChaAPI.Services
     public interface IGameService
     {
         InitGameReturnValue InitGame(int gameId, int numOfDecks = 1);
-        Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> cardIds);
+        ReturnTributeReturnValue ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> cardIds);
         int AddPlayerToGame(int gameId);
         int CreateNewGame(int capacity);
         void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
         IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
         int GetGameCapacity(int gameId);
+        bool getFlag(int a, int b, int c);
+        void setFlag(int a, int b, int c, bool flag);
     }
 }

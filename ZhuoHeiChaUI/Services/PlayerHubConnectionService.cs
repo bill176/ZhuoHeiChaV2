@@ -71,8 +71,12 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.PlayAnotherRound,
                 () => NotifyPlayAnotherRound?.Invoke(this, new NotifyPlayAnotherRoundEventArgs()));
 
-            _connection.On(ClientHubMethods.ReturnTribute,
-                () => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs()));
+            _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
+                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs 
+                { 
+                    payer = payer,
+                    cardsToBeReturnCount = cardsToBeReturnCount
+                }));
 
             _connection.On(ClientHubMethods.PlayHandSuccess,
                 () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
@@ -83,14 +87,14 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.CanStartGame,
                 () => NotifyCanStartGame?.Invoke(this, null));
 
+            
+
             _connection.On<InitalGamePackage>(ClientHubMethods.InitializeGameState,
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
                     cardAfter = initalGamePackage.CardAfter,
                     cardBefore = initalGamePackage.CardBefore,
-                    tributeList = initalGamePackage.TributeList,
-                    PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound,
-                    PlayerTypeListLastRound = initalGamePackage.PlayerTypeListLastRound
+                    PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound
 
                 }));
         }

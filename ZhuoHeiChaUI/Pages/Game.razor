@@ -21,27 +21,24 @@
 }
 else
 {
-    <p>Wait dealer to start game</p>
-    @if (playerId == "0")
+    @if (playerId == "0" & StartGameUIFlag)
     {
         <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
+    @if (StartGameUIFlag)
+    {
+        <p>Wait dealer to start game</p>
+    }
 
-    // dealer starts the game
+// dealer starts the game
     //{
     //    <p>Show table and cards</p>
     //}
-    @if (ReturnTributeFlag == 1)
+    @if (ReturnTributeUIFlag)
     {
-        <ReturnTributeComponent @bind-cardsToBeReturned="@cardsToBeReturned"></ReturnTributeComponent>
+       <ReturnTributeComponent OnClick=@StartReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
     }
-                
-    
-    
-
-
-}
-
+}        
 
 
 
@@ -56,19 +53,17 @@ ask players whether ace go public (upon receiving a notification)*@
 @code {
     [Parameter]
     public int GameId { get; set; }
-    public List<int> cardsToBeReturned { get; set; } = null;
     private string playerId;
     private string userName;
     private bool successJoin = false;
     private bool canStartGame = false;
     private List<int> cards;
 
-
-
-    List<int> ReturnTributeList;
-    List<int> PlayerTypeListLastRound;
-    List<int> PlayerTypeListThisRound;
-    int ReturnTributeFlag;
+    private List<int> PlayerTypeListThisRound;
+    bool ReturnTributeUIFlag = false;
+    bool StartGameUIFlag = true;
+    int payer;
+    int cardsCountReturnToPayer;
 
     private HubConnection _hubConnection;
 
@@ -77,6 +72,7 @@ ask players whether ace go public (upon receiving a notification)*@
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.InitializeGameState += InitialGameState;
+        PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
     }
 
     private async Task AddToGame()
@@ -109,6 +105,10 @@ ask players whether ace go public (upon receiving a notification)*@
             return;
         }
         Console.WriteLine("Game successfully started!");
+
+        // hide start game (or waiting for start game) UI
+        StartGameUIFlag = false;
+        StateHasChanged();
     }
 
     private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
@@ -122,45 +122,42 @@ ask players whether ace go public (upon receiving a notification)*@
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
 
-        ReturnTributeList = args.tributeList;
 
-        //  for est #############################
-        ReturnTributeList = new List<int>(new int[] { 1, 2} );
+        ////  for est #############################
+        //if(playerId == "0")
+        //    ReturnTributeList = new List<int>(new int[] { 1, 2} );
 
-        PlayerTypeListLastRound = args.PlayerTypeListLastRound;
-        PlayerTypeListThisRound = args.PlayerTypeListThisRound;
-        StartReturnTribute();
+        //PlayerTypeListThisRound = args.PlayerTypeListThisRound;
+
+        //if (ReturnTributeList.Count == 0)
+        //{
+        //    Console.WriteLine("no need to return tribute ");
+        //    return;
+        //}
+        //ReturnTributeFlag = 1;
+        //StateHasChanged();
+        //Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
+
 
     }
-
-    private async Task StartReturnTribute()
+    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
-        if (ReturnTributeList.Count == 0)
-        {
-            Console.WriteLine("no need to return tribute ");
-            return;
-        }
-        Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
-        foreach (var payer in ReturnTributeList)
-        {
-            HttpResponseMessage response = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
-            do
-            {
-                
-                ReturnTributeFlag = 1;
-                StateHasChanged();
-                var returnCardsCount = Math.Max(PlayerTypeListLastRound[Int32.Parse(playerId)], PlayerTypeListLastRound[payer]);
-                Console.WriteLine($"now, return {returnCardsCount} cards to {payer}");
+        payer = args.payer;
+        cardsCountReturnToPayer = args.cardsToBeReturnCount;
+        ReturnTributeUIFlag = true;
+        StateHasChanged();
+    }
 
-                // response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute", playerId, payer, cardsToBeReturned);
-            } while(!response.IsSuccessStatusCode);
 
-            ReturnTributeFlag = 0;
-            StateHasChanged();
-            //Console.WriteLine($"successfully return cards to {payer}!");
-        }
+    private async Task StartReturnTribute(List<int> cardsToBeReturned)
+    {
+        string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
+        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
+         
+        Console.WriteLine($"you just return cards to {payer}!");
         
-        Console.WriteLine("Finish return tribute!");
+        ReturnTributeUIFlag = false;
+        StateHasChanged();
     }
 
 
