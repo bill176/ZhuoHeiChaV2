@@ -16,7 +16,6 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler NotifyCanStartGame;
         public event EventHandler<NotifyPlayCardEventArgs> NotifyPlayCard;
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
-        public event EventHandler<NotifyAskAceGoPublicEventArgs> NotifyAskAceGoPublic;
         public event EventHandler<NotifyPlayAnotherRoundEventArgs> NotifyPlayAnotherRound;
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
         public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
@@ -62,11 +61,11 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.PlayCard,
                 () => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs()));
 
-            _connection.On(ClientHubMethods.AskAceGoPublic,
-                () => NotifyAskAceGoPublic?.Invoke(this, new NotifyAskAceGoPublicEventArgs()));
-
-            _connection.On(ClientHubMethods.AceGoPublic,
-                () => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs()));
+            _connection.On<bool>(ClientHubMethods.AceGoPublic,
+                (isPublicAce) => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs
+                {
+                    isPublicAce = isPublicAce
+                }));
 
             _connection.On(ClientHubMethods.PlayAnotherRound,
                 () => NotifyPlayAnotherRound?.Invoke(this, new NotifyPlayAnotherRoundEventArgs()));

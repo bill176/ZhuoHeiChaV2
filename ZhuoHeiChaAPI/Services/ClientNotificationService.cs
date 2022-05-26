@@ -55,10 +55,11 @@ namespace ZhuoHeiChaAPI.Services
             await _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.ReceiveMessage, message);
         }
 
-        public async Task AskAllAceGoPublic(int gameId, int playerId, PlayerType playerType)
+        public async Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce)
         {
-            // TODO:
-            throw new NotImplementedException();
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.AceGoPublic, isPublicAce);
         }
 
         private string GetClientId(int gameId, int playerId)
@@ -96,7 +97,7 @@ namespace ZhuoHeiChaAPI.Services
         Task NotifyReturnTribute(int gameId, int playerId);
         Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);
-        Task AskAllAceGoPublic(int gameId, int playerId, PlayerType playerType);
+        Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
         Task NotifyCanStartGame(int gameId, int playerId);
         Task NotifyReturnTribute(int gameId, int receiver, int payer, int cardsToBeReturned);
 

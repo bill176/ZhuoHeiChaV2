@@ -155,7 +155,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public IEnumerable<PlayerType> GetPlayerTypeList(int gameId)
+        public IEnumerable<bool> IsPublicAceList(int gameId)
         {
             // assume gameId is always valid since it's called after ReturnTribute succeeded
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -163,10 +163,13 @@ namespace ZhuoHeiChaAPI.Services
                 throw new Exception($"Failed to get playerTypes for game {gameId}");
             }
 
+            // TODO
+            // ???????????? the get operation do not need lock? ??????????????
+
             var (game, lockObject) = gameLockPair;
             lock (lockObject)
             {
-                return game.PlayerTypeList;
+                return game.IsPublicAceList();
             }
         }
 
@@ -190,7 +193,7 @@ namespace ZhuoHeiChaAPI.Services
         int CreateNewGame(int capacity);
         void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
-        IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
+        IEnumerable<bool> IsPublicAceList(int gameId);
         int GetGameCapacity(int gameId);
         bool getFlag(int a, int b, int c);
         void setFlag(int a, int b, int c, bool flag);

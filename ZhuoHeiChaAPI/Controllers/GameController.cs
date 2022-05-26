@@ -253,9 +253,9 @@ namespace ZhuoHeiChaAPI.Controllers
         private void StartAceGoPublic(int gameId) 
         {
             // notify ace go public
-            var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
-            for (var id = 0; id < playerTypeList.Count; ++id)
-                await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
+            var isPublicAceList = _gameService.IsPublicAceList(gameId).ToList();
+            for (var id = 0; id < isPublicAceList.Count; ++id)
+                _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
         }
 
 

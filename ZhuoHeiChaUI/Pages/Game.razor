@@ -73,6 +73,7 @@ ask players whether ace go public (upon receiving a notification)*@
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.InitializeGameState += InitialGameState;
         PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
+        PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
     }
 
     private async Task AddToGame()
@@ -122,23 +123,6 @@ ask players whether ace go public (upon receiving a notification)*@
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
 
-
-        ////  for est #############################
-        //if(playerId == "0")
-        //    ReturnTributeList = new List<int>(new int[] { 1, 2} );
-
-        //PlayerTypeListThisRound = args.PlayerTypeListThisRound;
-
-        //if (ReturnTributeList.Count == 0)
-        //{
-        //    Console.WriteLine("no need to return tribute ");
-        //    return;
-        //}
-        //ReturnTributeFlag = 1;
-        //StateHasChanged();
-        //Console.WriteLine($"you need to return tribute to player {string.Join(",", ReturnTributeList)}");
-
-
     }
     private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
@@ -148,17 +132,24 @@ ask players whether ace go public (upon receiving a notification)*@
         StateHasChanged();
     }
 
+    
+    private void OnNotifyAceGoPublic(object? sender, NotifyAceGoPublicEventArgs args)
+    {
+        // TODO
+
+    }
 
     private async Task StartReturnTribute(List<int> cardsToBeReturned)
     {
         string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
-         
+
         Console.WriteLine($"you just return cards to {payer}!");
-        
+
         ReturnTributeUIFlag = false;
         StateHasChanged();
     }
+
 
 
 

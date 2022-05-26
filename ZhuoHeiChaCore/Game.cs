@@ -14,8 +14,6 @@ namespace ZhuoHeiChaCore
         protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>{PlayerType.Ace, PlayerType.Normal, PlayerType.Normal };      // 0 not Ace; 1 is Ace not public; 2 public Ace
         // ###################################
 
-
-        public IEnumerable<PlayerType> PlayerTypeList => _playerTypeList;
         public int Capacity => _capacity;
 
         protected readonly List<int> _remainingPlayers = new List<int>();
@@ -273,6 +271,11 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
+        public IEnumerable<bool> IsPublicAceList() 
+        {
+            return _playerTypeList.Select(t => t==PlayerType.PublicAce);
+        }
+
         public void AceGoPublic(int goPublicPlayerId)
         {
             // check valid or not
@@ -396,8 +399,7 @@ namespace ZhuoHeiChaCore
 
     public interface IGame
     {
-        
-        IEnumerable<PlayerType> PlayerTypeList { get; }
+        IEnumerable<bool> IsPublicAceList();
         int Capacity { get; }
 
         InitGameReturnValue InitGame(int numOfDecks = 1);
