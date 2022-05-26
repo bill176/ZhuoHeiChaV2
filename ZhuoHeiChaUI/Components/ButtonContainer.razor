@@ -59,7 +59,13 @@
 
     private void OnReturnTributeButtonClicked() { }
 
-    private void OnAceGoPublicButtonClicked() { }
+    // TODO: ?????????????????????
+    // Button Container do not have access to game.rezor info
+    private void OnAceGoPublicButtonClicked()
+    {
+        // var response = Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={}", new { });
+
+    }
 
     private void OnAceStayPrivateButtonClicked() { }
 

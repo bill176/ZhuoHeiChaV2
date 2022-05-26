@@ -233,7 +233,8 @@ namespace ZhuoHeiChaAPI.Controllers
                     foreach (var playerId in cardsAfterReturnTribute.Keys)
                         await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfterReturnTribute[playerId]).ToList());
 
-                    
+                    // Start AceGoPublic After return tribute
+                    StartAceGoPublic(gameId);
                 }
 
                 return Ok();
@@ -256,6 +257,31 @@ namespace ZhuoHeiChaAPI.Controllers
             var isPublicAceList = _gameService.IsPublicAceList(gameId).ToList();
             for (var id = 0; id < isPublicAceList.Count; ++id)
                 _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
+        }
+
+        /// <summary>
+        /// Set player to public ace
+        /// </summary>
+        [HttpPost("{gameId:int}/acegopublic")]
+        public async Task<IActionResult> AceGoPublic(int gameId, [FromQuery] int playerId)
+        {
+            try
+            {
+                _gameService.AceGoPublic(gameId, playerId);
+                return Ok(gameId);
+            }
+            // ??????????? How to write exception ????????????? 
+            catch (ArgumentException e) 
+            {
+                _logger.LogError(e.Message);
+                return BadRequest();
+            }
+
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Error in {nameof(AceGoPublic)}!");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
 
