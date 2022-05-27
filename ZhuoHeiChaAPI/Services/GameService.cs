@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Linq;
 using ZhuoHeiChaCore;
 using ZhuoHeiChaCore.Factories;
 using ZhuoHeiChaCore.ReturnTypeAndValue;
@@ -11,7 +12,7 @@ namespace ZhuoHeiChaAPI.Services
 {
     public class GameService : IGameService
     {
-        private Dictionary<int, Dictionary<int, Dictionary<int, bool>>> FinishedReturnTributeFlagsDictionary = new Dictionary<int, Dictionary<int, Dictionary<int, bool>>>();
+        private Dictionary<int, Dictionary<int, List<PayerInfo>>> _returnTable = new Dictionary<int, Dictionary<int, List<PayerInfo>>>();
 
         private int _gameCounter;
         private readonly ConcurrentDictionary<int, (IGame, object)> _gameSessions = new ConcurrentDictionary<int, (IGame, object)>();
@@ -20,33 +21,47 @@ namespace ZhuoHeiChaAPI.Services
         private readonly ICardHelper _cardHelper;
         private readonly IGameFactory _gameFactory;
 
-        public bool getFlag(int a, int b, int c) 
+
+
+        public void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount) 
         {
-            return FinishedReturnTributeFlagsDictionary[a][b][c];
-        }
-        public void setFlag(int a, int b, int c, bool flag) {
+            _returnTable[gameId] = new Dictionary<int, List<PayerInfo>>();
 
-            if (!FinishedReturnTributeFlagsDictionary.ContainsKey(a))
+            foreach (var receiverId in returnTributeListByPlayerId.Keys) 
             {
-                FinishedReturnTributeFlagsDictionary[a] = new Dictionary<int, Dictionary<int, bool>>();
-                FinishedReturnTributeFlagsDictionary[a][b] = new Dictionary<int, bool>();
-                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
-            }
-            else if ((!FinishedReturnTributeFlagsDictionary[a].ContainsKey(b))) 
-            {
-                FinishedReturnTributeFlagsDictionary[a][b] = new Dictionary<int, bool>();
-                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
-            }
-            else if ((!FinishedReturnTributeFlagsDictionary[a][b].ContainsKey(c)))
-            {
-                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
-            }
-            else
-                FinishedReturnTributeFlagsDictionary[a][b][c] = flag;
+                
+                _returnTable[gameId][receiverId] = new List<PayerInfo>();
 
-
+                var ReturnTributeList = returnTributeListByPlayerId[receiverId].ToList();
+                var cardsToBeReturnCountList = cardsToBeReturnCount[receiverId].ToList();
+                
+                for (int i = 0; i < ReturnTributeList.Count; i++) 
+                {
+                    _returnTable[gameId][receiverId].Add(new PayerInfo
+                    {
+                        PayerId = ReturnTributeList[i],
+                        IsFinishedReturnTribute = false,
+                        ReturnTributeCount = cardsToBeReturnCountList[i]
+                    });
+                }
+            }
+                
         }
 
+        public PayerInfo GetFirstPayerTarget(int gameId, int receiverId)
+        {
+            return _returnTable[gameId][receiverId].FirstOrDefault();
+        }
+
+        public PayerInfo GetNextPayerTarget(int gameId, int receiverId)
+        {
+            return _returnTable[gameId][receiverId].FirstOrDefault(x => x.IsFinishedReturnTribute == false);
+        }
+
+        public void SetPayerTargetToValid(int gameId, int receiverId, int payerId) 
+        {
+            var a = _returnTable[gameId][receiverId].Find(x => x.PayerId == payerId).IsFinishedReturnTribute = true;
+        }
 
         public GameService(ILogger<GameService> logger, ICardHelper cardHelper, IGameFactory gameFactory)
         {
@@ -155,7 +170,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public IEnumerable<bool> IsPublicAceList(int gameId)
+        public IEnumerable<bool> IsBlackAceList(int gameId)
         {
             // assume gameId is always valid since it's called after ReturnTribute succeeded
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -169,7 +184,7 @@ namespace ZhuoHeiChaAPI.Services
             var (game, lockObject) = gameLockPair;
             lock (lockObject)
             {
-                return game.IsPublicAceList();
+                return game.IsBlackAceList();
             }
         }
 
@@ -193,9 +208,21 @@ namespace ZhuoHeiChaAPI.Services
         int CreateNewGame(int capacity);
         void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
-        IEnumerable<bool> IsPublicAceList(int gameId);
+        IEnumerable<bool> IsBlackAceList(int gameId);
         int GetGameCapacity(int gameId);
-        bool getFlag(int a, int b, int c);
-        void setFlag(int a, int b, int c, bool flag);
+        void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount);
+        PayerInfo GetFirstPayerTarget(int gameId, int receiverId);
+
+        PayerInfo GetNextPayerTarget(int gameId, int receiverId);
+        void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
+    }
+
+
+    public class PayerInfo
+    {
+        public int PayerId { get; set; }
+        public bool IsFinishedReturnTribute { get; set; }
+        public int ReturnTributeCount { get; set; }
     }
 }
+

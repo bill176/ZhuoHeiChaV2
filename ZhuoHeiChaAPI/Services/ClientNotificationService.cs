@@ -45,9 +45,11 @@ namespace ZhuoHeiChaAPI.Services
             SendMessageToAll(gameId, $"Player {playerId} of game {gameId} just joined!");
         }
 
-        public async Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards)
+        public async Task SendCardUpdate(int gameId, int playerId, List<int> newCards)
         {
-            throw new NotImplementedException();
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.UpdateCards, newCards);
         }
 
         public async Task SendMessageToAll(int gameId, string message)
@@ -91,7 +93,7 @@ namespace ZhuoHeiChaAPI.Services
     public interface IClientNotificationService
     {
         void RegisterClient(int gameId, int playerId, Player player);
-        Task SendCardUpdate(int gameId, int playerId, IEnumerable<int> newCards);
+        Task SendCardUpdate(int gameId, int playerId, List<int> newCards);
 
         Task SendInitalGamePackage(int gameId, int playerId, InitalGamePackage initalGamePackage);
         Task NotifyReturnTribute(int gameId, int playerId);

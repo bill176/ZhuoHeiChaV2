@@ -21,7 +21,7 @@
 }
 else
 {
-    @if (playerId == "0" & StartGameUIFlag)
+    @if (playerId == "0" && StartGameUIFlag)
     {
         <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
@@ -30,23 +30,14 @@ else
         <p>Wait dealer to start game</p>
     }
 
-// dealer starts the game
-    //{
-    //    <p>Show table and cards</p>
-    //}
     @if (ReturnTributeUIFlag)
     {
        <ReturnTributeComponent OnClick=@StartReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
     }
+
+    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ></ButtonContainer>
+    
 }        
-
-
-
-
-@*decide return tribute process by ReturnTributeListByPlayerId
-tell player number of cards to be returned
-show cards after return tribute, based on _clientNotificationService.SendCardUpdate
-ask players whether ace go public (upon receiving a notification)*@
 
 
 
@@ -62,6 +53,8 @@ ask players whether ace go public (upon receiving a notification)*@
     private List<int> PlayerTypeListThisRound;
     bool ReturnTributeUIFlag = false;
     bool StartGameUIFlag = true;
+    bool ButtonContainerUIFlag = false;
+
     int payer;
     int cardsCountReturnToPayer;
 
@@ -73,7 +66,7 @@ ask players whether ace go public (upon receiving a notification)*@
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.InitializeGameState += InitialGameState;
         PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
-        PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
+        PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
     }
 
     private async Task AddToGame()
@@ -132,25 +125,37 @@ ask players whether ace go public (upon receiving a notification)*@
         StateHasChanged();
     }
 
-    
-    private void OnNotifyAceGoPublic(object? sender, NotifyAceGoPublicEventArgs args)
+    private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
     {
-        // TODO
+        cards = args.UpdatedCard;
+        Console.WriteLine(string.Join(",", cards));
 
     }
+
 
     private async Task StartReturnTribute(List<int> cardsToBeReturned)
     {
+        ReturnTributeUIFlag = false;
+        StateHasChanged();
         string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
 
-        Console.WriteLine($"you just return cards to {payer}!");
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"Failed return cards to {payer}!");
+            ReturnTributeUIFlag = true;
+            StateHasChanged();
+            return;
+        }
 
-        ReturnTributeUIFlag = false;
-        StateHasChanged();
+        Console.WriteLine($"you just return cards to {payer}!");
     }
 
-
+    private async Task ProcessAceGoPublic(bool IsGoPublic)
+    {
+        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={playerId}&isGoPublic={IsGoPublic}", new { });
+        Console.WriteLine("you just Publish the Ace!");
+    }
 
 
     #region NotificationHandlers

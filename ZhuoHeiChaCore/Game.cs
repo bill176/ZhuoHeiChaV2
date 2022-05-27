@@ -271,9 +271,9 @@ namespace ZhuoHeiChaCore
             return playerCardsDictionary;
         }
 
-        public IEnumerable<bool> IsPublicAceList() 
+        public IEnumerable<bool> IsBlackAceList() 
         {
-            return _playerTypeList.Select(t => t==PlayerType.PublicAce);
+            return _playerTypeList.Select(t => t==PlayerType.Ace);
         }
 
         public void AceGoPublic(int goPublicPlayerId)
@@ -399,7 +399,7 @@ namespace ZhuoHeiChaCore
 
     public interface IGame
     {
-        IEnumerable<bool> IsPublicAceList();
+        IEnumerable<bool> IsBlackAceList();
         int Capacity { get; }
 
         InitGameReturnValue InitGame(int numOfDecks = 1);

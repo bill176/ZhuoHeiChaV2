@@ -90,7 +90,7 @@ namespace ZhuoHeiChaAPI.Controllers
         /// <param name="capacity"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult CreateNewGame([FromQuery]int capacity)
+        public IActionResult CreateNewGame([FromQuery] int capacity)
         {
             if (capacity <= 0)
             {
@@ -101,7 +101,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {
                 var newGameId = _gameService.CreateNewGame(capacity);
-                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");                
+                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");
 
                 return Ok(newGameId);
             }
@@ -138,7 +138,7 @@ namespace ZhuoHeiChaAPI.Controllers
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, PlayerTypeListThisRound = PlayerTypeListThisRound};
+                    var initalGamePackage = new InitalGamePackage { CardBefore = cardBefore, CardAfter = cardAfter, PlayerTypeListThisRound = PlayerTypeListThisRound };
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
@@ -146,49 +146,17 @@ namespace ZhuoHeiChaAPI.Controllers
 
 
                 // return tribute
-                // initial flag value
-                foreach (var playerId in ReturnTributeListByPlayerId.Keys) 
-                {
-                    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                    foreach (var payer in ReturnTributeList) 
-                    {
-                        _gameService.setFlag(gameId, playerId, payer, false);
-                    }
-                }
+                // initial table value
+                _gameService.InitReturnTable(gameId, ReturnTributeListByPlayerId, cardsToBeReturnCount);
 
-                // start return tribute one by one
+                // first payer start return tribute 
                 foreach (var playerId in ReturnTributeListByPlayerId.Keys)
                 {
-                    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                    var cardsToBeReturnCountList = cardsToBeReturnCount[playerId].ToList();
-
-                    foreach (var payer in ReturnTributeList)
-                    {
-                        while (!_gameService.getFlag(gameId, playerId, payer))
-                        {
-                            _clientNotificationService.NotifyReturnTribute(gameId, playerId, payer, cardsToBeReturnCountList[payer]);
-                            System.Threading.Thread.Sleep(10000);
-                        }
-                            }
-
+                    var firstPayerTarget = _gameService.GetFirstPayerTarget(gameId, playerId);
+                    if (firstPayerTarget != null)
+                        _clientNotificationService.NotifyReturnTribute(gameId, playerId, firstPayerTarget.PayerId, firstPayerTarget.ReturnTributeCount);
 
                 }
-                //Parallel.ForEach(ReturnTributeListByPlayerId.Keys, (playerId) =>
-                //{
-                //    var ReturnTributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                //    var cardsToBeReturnCountList = cardsToBeReturnCount[playerId].ToList();
-
-                //    foreach (var payer in ReturnTributeList)
-                //    {
-                //        bool finish_return = false;
-                //        _clientNotificationService.NotifyReturnTribute(gameId, playerId, payer, cardsToBeReturnCountList[payer]);
-                //    }
-
-
-                //}
-                //);
-
-
 
                 _logger.LogInformation("finish sending cards info to frontend + return tribute finished");
 
@@ -209,7 +177,7 @@ namespace ZhuoHeiChaAPI.Controllers
         //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
-        public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString) 
+        public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString)
         {
             var card_id = cardsToBeReturnedString.Split(',').Select(Int32.Parse);
             try
@@ -223,9 +191,14 @@ namespace ZhuoHeiChaAPI.Controllers
                 var returnTributeValid = returnTributeReturnValue.returnTributeValid;
 
                 // if returned cards are valid, change flag value and begin returning cards to next payer.
-                if (returnTributeValid) 
+                
+
+                _gameService.SetPayerTargetToValid(gameId, receiver, payer);
+                var nextPayerTarget = _gameService.GetNextPayerTarget(gameId, receiver);
+                if (nextPayerTarget != null) 
                 {
-                    _gameService.setFlag(gameId, receiver, payer, true); 
+                    await _clientNotificationService.NotifyReturnTribute(gameId, receiver, nextPayerTarget.PayerId, nextPayerTarget.ReturnTributeCount);
+                    return Ok();
                 }
 
                 if (cardsAfterReturnTribute.Count != 0)    // the last player has finished pay tribute
@@ -241,7 +214,7 @@ namespace ZhuoHeiChaAPI.Controllers
             }
             catch (ArgumentException e)
             {
-                _logger.LogError(e, "Argument Exception");
+                _logger.LogError(e.Message);
                 return BadRequest();
             }
             catch (Exception e)
@@ -251,10 +224,10 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void StartAceGoPublic(int gameId) 
+        private void StartAceGoPublic(int gameId)
         {
             // notify ace go public
-            var isPublicAceList = _gameService.IsPublicAceList(gameId).ToList();
+            var isPublicAceList = _gameService.IsBlackAceList(gameId).ToList();
             for (var id = 0; id < isPublicAceList.Count; ++id)
                 _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
         }
@@ -263,15 +236,15 @@ namespace ZhuoHeiChaAPI.Controllers
         /// Set player to public ace
         /// </summary>
         [HttpPost("{gameId:int}/acegopublic")]
-        public async Task<IActionResult> AceGoPublic(int gameId, [FromQuery] int playerId)
+        public async Task<IActionResult> AceGoPublic(int gameId, [FromQuery] int playerId, [FromQuery] bool IsGoPublic)
         {
             try
-            {
-                _gameService.AceGoPublic(gameId, playerId);
+            {   if(IsGoPublic)
+                    _gameService.AceGoPublic(gameId, playerId);
                 return Ok(gameId);
             }
             // ??????????? How to write exception ????????????? 
-            catch (ArgumentException e) 
+            catch (ArgumentException e)
             {
                 _logger.LogError(e.Message);
                 return BadRequest();

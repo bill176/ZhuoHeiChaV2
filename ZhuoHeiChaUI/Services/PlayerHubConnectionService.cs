@@ -20,6 +20,7 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
         public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
+        public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
 
         /// <summary>
@@ -80,13 +81,18 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.PlayHandSuccess,
                 () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
 
-            _connection.On(ClientHubMethods.UpdateCards,
+            _connection.On(ClientHubMethods.UpdateOpponentCardsCount,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));
 
             _connection.On(ClientHubMethods.CanStartGame,
                 () => NotifyCanStartGame?.Invoke(this, null));
 
-            
+            _connection.On<List<int>>(ClientHubMethods.UpdateCards,
+                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs 
+                {
+                    UpdatedCard = cards
+                }));
+
 
             _connection.On<InitalGamePackage>(ClientHubMethods.InitializeGameState,
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
