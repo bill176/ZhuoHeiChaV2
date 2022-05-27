@@ -15,9 +15,11 @@
             </button>
             break;
         case ClientState.ReturningTribute:
-            <button type="button" class="button" name="returnTribute" @onclick="OnReturnTributeButtonClicked">
-                确认
-            </button>
+
+        
+      <ReturnTributeComponent ProcessReturnTribute=@ProcessReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
+    
+            
             break;
         case ClientState.AceGoingPublic:
             <button type="button" class="button" name="aceGoPublic" @onclick="OnAceGoPublicButtonClicked">
@@ -43,8 +45,13 @@
 
 @code {
 
+    int payer;
+    int cardsCountReturnToPayer;
+
     [Parameter]
     public Func<bool, Task> ProcessAceGoPublic { get; set; }
+    [Parameter]
+    public Func<List<int>, int, Task> ProcessReturnTribute { get; set; }
 
     private ClientState clientState = ClientState.Default;
 
@@ -61,7 +68,6 @@
 
     private void OnSkipButtonClicked() { }
 
-    private void OnReturnTributeButtonClicked() { }
 
 
     private void OnAceGoPublicButtonClicked()
@@ -85,7 +91,7 @@
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
         PlayerHubConnection.NotifyPlayAnotherRound += OnNotifyPlayAnotherRound;
-        //PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
+        PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
         PlayerHubConnection.NotifyPlayHandSuccess += OnNotifyPlayHandSuccess;
     }
 
@@ -111,8 +117,10 @@
         StateHasChanged();
     }
 
-    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs e)
+    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
+        payer = args.payer;
+        cardsCountReturnToPayer = args.cardsToBeReturnCount;
         clientState = ClientState.ReturningTribute;
         StateHasChanged();
     }

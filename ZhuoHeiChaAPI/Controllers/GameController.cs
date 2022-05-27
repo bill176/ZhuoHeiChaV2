@@ -243,7 +243,6 @@ namespace ZhuoHeiChaAPI.Controllers
                     _gameService.AceGoPublic(gameId, playerId);
                 return Ok(gameId);
             }
-            // ??????????? How to write exception ????????????? 
             catch (ArgumentException e)
             {
                 _logger.LogError(e.Message);

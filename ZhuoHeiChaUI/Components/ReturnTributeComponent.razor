@@ -1,6 +1,9 @@
 ﻿<div>
-    <label>Please select @cardsCountReturnToPayer cards as your return cards to player @payer <br/> enter the cards you want to return use (,) to split</label>
-    <button @onclick="CardsToBeReturn">Enter</button>
+    <label>Please select @cardsCountReturnToPayer cards as your return cards to player @payer <br /> enter the cards you want to return use (,) to split</label>
+
+    <button type="button" class="button" name="returnTribute" @onclick="CardsToBeReturn">
+        确认
+    </button>
     <div>
         <input @bind="@cardsNumber" />
     </div>
@@ -9,7 +12,7 @@
 @code {
 
     [Parameter]
-    public Func<List<int>, Task> OnClick { get; set; }
+    public Func<List<int>, int, Task> ProcessReturnTribute { get; set; }
 
     [Parameter]
     public int payer { get; set; }
@@ -21,6 +24,6 @@
 
     private void CardsToBeReturn()
     {
-        OnClick(cardsNumber.Split(',').Select(Int32.Parse).ToList());
+        ProcessReturnTribute(cardsNumber.Split(',').Select(Int32.Parse).ToList(), payer);
     }
 }

@@ -30,12 +30,7 @@ else
         <p>Wait dealer to start game</p>
     }
 
-    @if (ReturnTributeUIFlag)
-    {
-       <ReturnTributeComponent OnClick=@StartReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
-    }
-
-    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ></ButtonContainer>
+    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ></ButtonContainer>
     
 }        
 
@@ -55,8 +50,6 @@ else
     bool StartGameUIFlag = true;
     bool ButtonContainerUIFlag = false;
 
-    int payer;
-    int cardsCountReturnToPayer;
 
     private HubConnection _hubConnection;
 
@@ -65,7 +58,6 @@ else
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.InitializeGameState += InitialGameState;
-        PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
     }
 
@@ -117,13 +109,7 @@ else
         Console.WriteLine("This is your cards after pay tribute");
 
     }
-    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
-    {
-        payer = args.payer;
-        cardsCountReturnToPayer = args.cardsToBeReturnCount;
-        ReturnTributeUIFlag = true;
-        StateHasChanged();
-    }
+ 
 
     private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
     {
@@ -133,7 +119,7 @@ else
     }
 
 
-    private async Task StartReturnTribute(List<int> cardsToBeReturned)
+    private async Task ProcessReturnTribute(List<int> cardsToBeReturned, int payer)
     {
         ReturnTributeUIFlag = false;
         StateHasChanged();
