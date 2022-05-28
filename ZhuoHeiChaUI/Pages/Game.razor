@@ -48,13 +48,12 @@ else
     private bool successJoin = false;
     private bool canStartGame = false;
     private List<Player> players = new List<Player>();
-    private List<int> cards;
+    private List<int> cards = new List<int>();
 
     private List<int> PlayerTypeListThisRound;
     bool ReturnTributeUIFlag = false;
     bool StartGameUIFlag = true;
     bool ButtonContainerUIFlag = false;
-
 
     private HubConnection _hubConnection;
 
@@ -114,8 +113,9 @@ else
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
 
+        StateHasChanged();
     }
- 
+
 
     private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
     {
@@ -130,7 +130,7 @@ else
         ReturnTributeUIFlag = false;
         StateHasChanged();
         string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
-        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
+        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?receiver={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
 
         if (!response.IsSuccessStatusCode)
         {
@@ -174,5 +174,4 @@ else
         StateHasChanged();
     }
     #endregion
-
 }

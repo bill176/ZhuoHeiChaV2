@@ -103,9 +103,6 @@ namespace ZhuoHeiChaCore
             PayTribute();
 
             _finishOrder.Clear();
-            // initialize player type list list based on cards in hand
-            foreach (var kvp in _cardsInHandByPlayerId)
-                _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
 
             _currentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
@@ -220,7 +217,14 @@ namespace ZhuoHeiChaCore
             // process the buffer if all tributes have been sent
             var cardsAfterReturnTribute = new Dictionary<int, IEnumerable<Card>>();
             if (_tributePairs.Count == 0)
+            {
                 cardsAfterReturnTribute = ProcessTributeBuffer();
+
+                _playerTypeList.Clear();
+                // initialize player type list list based on cards in hand
+                foreach (var kvp in _cardsInHandByPlayerId)
+                    _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
+            }
 
             return new ReturnTributeReturnValue
             {
@@ -269,7 +273,7 @@ namespace ZhuoHeiChaCore
 
         public IEnumerable<bool> IsBlackAceList() 
         {
-            return _playerTypeList.Select(t => t==PlayerType.Ace);
+            return _playerTypeList.Select(t => t==PlayerType.Ace || t == PlayerType.PublicAce);
         }
 
         public void AceGoPublic(int goPublicPlayerId)
