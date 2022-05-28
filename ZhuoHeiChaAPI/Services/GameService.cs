@@ -176,6 +176,7 @@ namespace ZhuoHeiChaAPI.Services
                 throw new Exception($"Failed to get playerTypes for game {gameId}");
             }
 
+            var game = gameLockPair.Item1;
             return game.IsBlackAceList();
             
         }
