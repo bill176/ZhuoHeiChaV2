@@ -9,8 +9,9 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         public Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)> CardsPairsByPlayerId { get; set; }
         public Dictionary<int, IEnumerable<int>> ReturnTributeListByPlayerId { get; set; }
 
-        public Dictionary<int, IEnumerable<int>> cardsToBeReturnCount { get; set; }
+        public Dictionary<int, IEnumerable<int>> CardsToBeReturnCount { get; set; }
 
         public IEnumerable<PlayerType> PlayerTypeListThisRound { get; set; }
+        public bool IsFirstRound { get; set; }
     }
 }

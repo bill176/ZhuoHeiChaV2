@@ -97,6 +97,8 @@ namespace ZhuoHeiChaCore
 
             _tributePairs.AddRange(tributePairs);
 
+            var isFirstRound = _tributePairs.Count == 0;
+
             // send tribute
             PayTribute();
 
@@ -135,8 +137,9 @@ namespace ZhuoHeiChaCore
             {
                 CardsPairsByPlayerId = cardsPairByPlayerId,
                 ReturnTributeListByPlayerId = returnTributeListByPlayerId,
-                cardsToBeReturnCount = cardsToBeReturnCount,
-                PlayerTypeListThisRound = _playerTypeList
+                CardsToBeReturnCount = cardsToBeReturnCount,
+                PlayerTypeListThisRound = _playerTypeList,
+                IsFirstRound = isFirstRound
                 
             };
         }

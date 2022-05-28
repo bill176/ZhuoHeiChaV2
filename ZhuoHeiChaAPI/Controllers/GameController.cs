@@ -130,7 +130,7 @@ namespace ZhuoHeiChaAPI.Controllers
                 // send cards info and tribute info to frontend
                 var cardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
                 var returnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
-                var cardsToBeReturnCount = initGameReturn.cardsToBeReturnCount;
+                var cardsToBeReturnCount = initGameReturn.CardsToBeReturnCount;
                 var playerTypeListThisRound = initGameReturn.PlayerTypeListThisRound.Select(p => ((int)p)).ToList();
 
                 // send initial data
@@ -142,6 +142,13 @@ namespace ZhuoHeiChaAPI.Controllers
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
+                }
+
+                if (initGameReturn.IsFirstRound) 
+                {
+                    // If the game is in first round, no need to return tribute, Start AceGoPublic directly
+                    StartAceGoPublic(gameId);
+                    return Ok(gameId);
                 }
 
 
