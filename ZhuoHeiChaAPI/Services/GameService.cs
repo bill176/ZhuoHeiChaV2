@@ -12,6 +12,9 @@ namespace ZhuoHeiChaAPI.Services
 {
     public class GameService : IGameService
     {
+        // This table is for Returning Tribute one by one, is has form: <gameId, <receiverId, PayerInfo>>, PayerInfo contains
+        // payerId and how many cards needed to be returned. With this table, we can call NotifyReturnTribute in GameController
+        // one by one.
         private Dictionary<int, Dictionary<int, List<PayerInfo>>> _returnTable = new Dictionary<int, Dictionary<int, List<PayerInfo>>>();
 
         private int _gameCounter;
@@ -46,11 +49,6 @@ namespace ZhuoHeiChaAPI.Services
                 }
             }
                 
-        }
-
-        public PayerInfo GetFirstPayerTarget(int gameId, int receiverId)
-        {
-            return _returnTable[gameId][receiverId].FirstOrDefault();
         }
 
         public PayerInfo GetNextPayerTarget(int gameId, int receiverId)
@@ -178,14 +176,8 @@ namespace ZhuoHeiChaAPI.Services
                 throw new Exception($"Failed to get playerTypes for game {gameId}");
             }
 
-            // TODO
-            // ???????????? the get operation do not need lock? ??????????????
-
-            var (game, lockObject) = gameLockPair;
-            lock (lockObject)
-            {
-                return game.IsBlackAceList();
-            }
+            return game.IsBlackAceList();
+            
         }
 
         public int GetGameCapacity(int gameId)
@@ -211,8 +203,6 @@ namespace ZhuoHeiChaAPI.Services
         IEnumerable<bool> IsBlackAceList(int gameId);
         int GetGameCapacity(int gameId);
         void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount);
-        PayerInfo GetFirstPayerTarget(int gameId, int receiverId);
-
         PayerInfo GetNextPayerTarget(int gameId, int receiverId);
         void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
     }

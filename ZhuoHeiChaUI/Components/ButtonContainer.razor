@@ -103,7 +103,7 @@
 
     private void OnNotifyAceGoPublic(object? sender, NotifyAceGoPublicEventArgs e)
     {
-        if (e.isPublicAce)
+        if (e.IsPublicAce)
         {
             clientState = ClientState.AceGoingPublic;
             StateHasChanged();
@@ -119,8 +119,8 @@
 
     private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
-        payer = args.payer;
-        cardsCountReturnToPayer = args.cardsToBeReturnCount;
+        payer = args.Payer;
+        cardsCountReturnToPayer = args.CardsToBeReturnCount;
         clientState = ClientState.ReturningTribute;
         StateHasChanged();
     }

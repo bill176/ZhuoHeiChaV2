@@ -65,7 +65,7 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<bool>(ClientHubMethods.AceGoPublic,
                 (isPublicAce) => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs
                 {
-                    isPublicAce = isPublicAce
+                    IsPublicAce = isPublicAce
                 }));
 
             _connection.On(ClientHubMethods.PlayAnotherRound,
@@ -74,8 +74,8 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
                 (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs 
                 { 
-                    payer = payer,
-                    cardsToBeReturnCount = cardsToBeReturnCount
+                    Payer = payer,
+                    CardsToBeReturnCount = cardsToBeReturnCount
                 }));
 
             _connection.On(ClientHubMethods.PlayHandSuccess,
@@ -97,8 +97,8 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<InitalGamePackage>(ClientHubMethods.InitializeGameState,
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
-                    cardAfter = initalGamePackage.CardAfter,
-                    cardBefore = initalGamePackage.CardBefore,
+                    CardAfter = initalGamePackage.CardAfter,
+                    CardBefore = initalGamePackage.CardBefore,
                     PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound
 
                 }));

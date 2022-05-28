@@ -99,11 +99,11 @@ else
 
     private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
     {
-        cards = args.cardBefore;
+        cards = args.CardBefore;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your original cards");
-        cards = args.cardAfter;
+        cards = args.CardAfter;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");

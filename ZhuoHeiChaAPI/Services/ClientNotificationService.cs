@@ -82,11 +82,11 @@ namespace ZhuoHeiChaAPI.Services
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeGameState, initalGamePackage);
         }
-        public async Task NotifyReturnTribute(int gameId, int receiver, int payer, int cardsToBeReturned)
+        public async Task NotifyReturnTribute(int gameId, int receiver, int payer, int returnTributeCount)
         {
             var clientId = GetClientId(gameId, receiver);
             var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTribute, payer, cardsToBeReturned);
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTribute, payer, returnTributeCount);
         }
     }
 
