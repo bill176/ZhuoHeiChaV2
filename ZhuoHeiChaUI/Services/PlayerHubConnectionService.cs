@@ -14,6 +14,7 @@ namespace ZhuoHeiChaUI.Services
 
         public event EventHandler<ReceiveMessageEventArgs> ReceiveMessage;
         public event EventHandler NotifyCanStartGame;
+        public event EventHandler<NotifyNewPlayerAddedEventArgs> NotifyNewPlayerAdded;
         public event EventHandler<NotifyPlayCardEventArgs> NotifyPlayCard;
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
         public event EventHandler<NotifyPlayAnotherRoundEventArgs> NotifyPlayAnotherRound;
@@ -102,6 +103,9 @@ namespace ZhuoHeiChaUI.Services
                     PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound
 
                 }));
+
+            _connection.On<List<Player>>(ClientHubMethods.NewPlayerAdded,
+                (players) => NotifyNewPlayerAdded?.Invoke(this, new NotifyNewPlayerAddedEventArgs { UpdatedPlayers = players }));
         }
     }
 }

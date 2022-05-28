@@ -17,6 +17,11 @@ namespace ZhuoHeiChaAPI.Services
         /// </summary>
         private readonly ConcurrentDictionary<string, Player> _playersByClientId = new ConcurrentDictionary<string, Player>();
 
+        /// <summary>
+        /// A list of Player objects indexed by game id
+        /// </summary>
+        private readonly ConcurrentDictionary<int, (object, List<Player>)> _playersByGameId = new ConcurrentDictionary<int, (object, List<Player>)>();
+
         private readonly IHubContext<PlayerHub> _hubContext;
 
         public ClientNotificationService(IHubContext<PlayerHub> hubContext)
@@ -39,10 +44,17 @@ namespace ZhuoHeiChaAPI.Services
             var clientId = GetClientId(gameId, playerId);
             _playersByClientId[clientId] = player;
 
+            _playersByGameId.GetOrAdd(gameId, (new object(), new List<Player>()));
+            var (lockObj, players) = _playersByGameId[gameId];
+            lock (lockObj)
+            {
+                players.Add(player);
+            }
+
             _hubContext.Groups.AddToGroupAsync(player.ConnectionId, gameId.ToString());
 
             // No need to wait here; ignore the warning
-            SendMessageToAll(gameId, $"Player {playerId} of game {gameId} just joined!");
+            _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.NewPlayerAdded, players);
         }
 
         public async Task SendCardUpdate(int gameId, int playerId, List<int> newCards)

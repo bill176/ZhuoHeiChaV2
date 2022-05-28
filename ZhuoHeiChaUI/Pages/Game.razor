@@ -21,6 +21,9 @@
 }
 else
 {
+    <p>Wait dealer to start game...</p>
+    <p>Current player(s):</p>
+    <WaitingPlayerList Players="@players" />
     @if (playerId == "0" && StartGameUIFlag)
     {
         <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
@@ -39,10 +42,12 @@ else
 @code {
     [Parameter]
     public int GameId { get; set; }
+
     private string playerId;
     private string userName;
     private bool successJoin = false;
     private bool canStartGame = false;
+    private List<Player> players = new List<Player>();
     private List<int> cards;
 
     private List<int> PlayerTypeListThisRound;
@@ -57,6 +62,7 @@ else
     {
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
+        PlayerHubConnection.NotifyNewPlayerAdded += OnNotifyNewPlayerAdded;
         PlayerHubConnection.InitializeGameState += InitialGameState;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
     }
@@ -160,6 +166,12 @@ else
     private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
     {
         Console.WriteLine(args.Message);
+    }
+
+    private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
+    {
+        players = args.UpdatedPlayers;
+        StateHasChanged();
     }
     #endregion
 
