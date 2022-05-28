@@ -103,6 +103,11 @@ namespace ZhuoHeiChaCore
             PayTribute();
 
             _finishOrder.Clear();
+            if (_playerTypeList.Count == 0)
+            {
+                foreach (var kvp in _cardsInHandByPlayerId)
+                    _playerTypeList.Add(_gameHelper.GetPlayerType(kvp.Value));
+            }
 
             _currentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
