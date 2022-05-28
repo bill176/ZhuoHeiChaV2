@@ -34,8 +34,9 @@ else
     }
 
     <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ></ButtonContainer>
-    <PlayingCards CardIds="@cards" IsInteractive="false"/>
-}        
+    <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
+    <label>@string.Join(',', SelectedCardIds)</label>
+} 
 
 
 
@@ -54,6 +55,9 @@ else
     bool ReturnTributeUIFlag = false;
     bool StartGameUIFlag = true;
     bool ButtonContainerUIFlag = false;
+
+    // for testing
+    private List<int> SelectedCardIds = new List<int>();
 
     private HubConnection _hubConnection;
 

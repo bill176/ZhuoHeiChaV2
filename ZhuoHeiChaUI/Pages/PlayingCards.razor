@@ -5,14 +5,12 @@
         @if (IsInteractive)
         {
             // for displaying cards for current player
-            @foreach (var indexCardIdPair in GetIndexValuePairsFromList(CardIds))
+            @foreach (var cardId in CardIds)
             {
-                var index = indexCardIdPair.Item1;
-                var cardId = indexCardIdPair.Item2;
                 var cardDisplayInfo = new CardDisplayInfo(cardId);
                 <li>
-                    <a class="card @(cardDisplayInfo.StyleClasses) @(_selectedCardsIndex.Contains(index) ? "selected" : string.Empty)"
-                       @onclick="() => OnCardToggled(index)">
+                    <a class="card @(cardDisplayInfo.StyleClasses) @(SelectedCardIds.Contains(cardId) ? "selected" : string.Empty)"
+                       @onclick="() => OnCardToggled(cardId)">
                         <span class="rank">@cardDisplayInfo.DisplayRank</span>
                         <span class="suit">@cardDisplayInfo.DisplaySuit</span>
                     </a>
@@ -44,27 +42,24 @@
     [Parameter]
     public bool IsInteractive { get; set; }
 
-    private List<int> _selectedCardsIndex = new List<int>();
+    [Parameter]
+    public List<int> SelectedCardIds { get; set; } = new List<int>();
 
-    private List<(int, int)> GetIndexValuePairsFromList(List<int> values)
+    [Parameter]
+    public EventCallback<List<int>> SelectedCardIdsChanged { get; set; }
+
+    private void OnCardToggled(int cardId)
     {
-        var pairs = new List<(int, int)>();
-        var idx = 0;
-        foreach (var value in values)
+        if (SelectedCardIds.Contains(cardId))
         {
-            pairs.Add((idx, value));
-            idx++;
+            SelectedCardIds.Remove(cardId);
+        }
+        else
+        {
+            SelectedCardIds.Add(cardId);
         }
 
-        return pairs;
-    }
-
-    private void OnCardToggled(int index)
-    {
-        if (_selectedCardsIndex.Contains(index))
-            _selectedCardsIndex.Remove(index);
-        else
-            _selectedCardsIndex.Add(index);
+        SelectedCardIdsChanged.InvokeAsync(SelectedCardIds);
     }
 
     // TODO: refactor this class
