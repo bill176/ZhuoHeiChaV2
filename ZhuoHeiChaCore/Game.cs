@@ -9,10 +9,8 @@ namespace ZhuoHeiChaCore
     {
         protected int _capacity;
         protected readonly Dictionary<int, List<Card>> _cardsInHandByPlayerId = new Dictionary<int, List<Card>>();
-        //protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
-        // ############## for test only ###################
-        protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>{PlayerType.Ace, PlayerType.Normal, PlayerType.Normal };      // 0 not Ace; 1 is Ace not public; 2 public Ace
-        // ###################################
+        protected readonly List<PlayerType> _playerTypeList = new List<PlayerType>();      // 0 not Ace; 1 is Ace not public; 2 public Ace
+
 
         public int Capacity => _capacity;
 
@@ -96,11 +94,6 @@ namespace ZhuoHeiChaCore
             // generate tribute list
             var tributePairs = GetTributePairs();
             _tributePairs.Clear();
-
-
-            // ############## for test only #################
-            tributePairs = new List<(int, int)> {(1,0), (2,0) };
-            // ################################################
 
             _tributePairs.AddRange(tributePairs);
 
