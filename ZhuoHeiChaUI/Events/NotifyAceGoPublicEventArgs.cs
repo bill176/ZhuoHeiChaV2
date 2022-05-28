@@ -7,5 +7,6 @@ namespace ZhuoHeiChaUI.Events
 {
     public class NotifyAceGoPublicEventArgs : EventArgs
     {
+        public bool IsPublicAce { get; set; }
     }
 }

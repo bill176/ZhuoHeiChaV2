@@ -90,7 +90,7 @@ namespace ZhuoHeiChaAPI.Controllers
         /// <param name="capacity"></param>
         /// <returns></returns>
         [HttpPost]
-        public IActionResult CreateNewGame([FromQuery]int capacity)
+        public IActionResult CreateNewGame([FromQuery] int capacity)
         {
             if (capacity <= 0)
             {
@@ -101,7 +101,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {
                 var newGameId = _gameService.CreateNewGame(capacity);
-                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");                
+                _logger.LogInformation($"New room created with id {newGameId} and capacity {capacity}");
 
                 return Ok(newGameId);
             }
@@ -128,20 +128,37 @@ namespace ZhuoHeiChaAPI.Controllers
                 _logger.LogInformation($"Initial game: {gameId}");
 
                 // send cards info and tribute info to frontend
-                var CardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
-                var ReturnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
-                foreach(var playerId in CardsPairsByPlayerId.Keys)
+                var cardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
+                var returnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
+                var cardsToBeReturnCount = initGameReturn.cardsToBeReturnCount;
+                var playerTypeListThisRound = initGameReturn.PlayerTypeListThisRound.Select(p => ((int)p)).ToList();
+
+                // send initial data
+                foreach (var playerId in cardsPairsByPlayerId.Keys)
                 {
-                    var cardBefore = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item1).ToList();
-                    var cardAfter = _cardHelper.ConvertCardsToIds(CardsPairsByPlayerId[playerId].Item2).ToList();
-                    var tributeList = ReturnTributeListByPlayerId[playerId].ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore= cardBefore, CardAfter= cardAfter, TributeList= tributeList };
+                    var cardBefore = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item1).ToList();
+                    var cardAfter = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item2).ToList();
+                    var initalGamePackage = new InitalGamePackage { CardBefore = cardBefore, CardAfter = cardAfter, PlayerTypeListThisRound = playerTypeListThisRound };
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
-                    // also send last round Ace type list, and this round Ace type list
                 }
-                _logger.LogInformation("finish sending cards info and tribute info to frontend");
+
+
+                // return tribute
+                // initial table value
+                _gameService.InitReturnTable(gameId, returnTributeListByPlayerId, cardsToBeReturnCount);
+
+                // first payer start return tribute 
+                foreach (var playerId in returnTributeListByPlayerId.Keys)
+                {
+                    var firstPayerTarget = _gameService.GetNextPayerTarget(gameId, playerId);
+                    if (firstPayerTarget != null)
+                        _clientNotificationService.NotifyReturnTribute(gameId, playerId, firstPayerTarget.PayerId, firstPayerTarget.ReturnTributeCount);
+
+                }
+
+                _logger.LogInformation("finish sending cards info to frontend + return tribute finished");
 
                 return Ok(gameId);
             }
@@ -152,6 +169,7 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+
         //localhost:5000/api/game/5/returntribute
         //body:
         //    sourcePlayerId: 1,
@@ -159,37 +177,81 @@ namespace ZhuoHeiChaAPI.Controllers
         //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
-        public async Task<IActionResult> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<int> card_id) 
+        public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString)
         {
+            var card_id = cardsToBeReturnedString.Split(',').Select(Int32.Parse);
             try
             {
                 // convert sharedcard(frontend) to Card (backend)
                 var cards = _cardHelper.ConvertIdsToCards(card_id);
 
-                var cardsAfteReturnTribute = _gameService.ReturnTribute(gameId, payer, receiver, cards);
 
-                if (cardsAfteReturnTribute.Count != 0)    // the last player has finished pay tribute
+                var returnTributeReturnValue = _gameService.ReturnTribute(gameId, payer, receiver, cards);
+                var cardsAfterReturnTribute = returnTributeReturnValue.cardsAfterReturnTribute;
+                var returnTributeValid = returnTributeReturnValue.returnTributeValid;
+
+                // if returned cards are valid, change flag value and begin returning cards to next payer.
+                
+
+                _gameService.SetPayerTargetToValid(gameId, receiver, payer);
+                var nextPayerTarget = _gameService.GetNextPayerTarget(gameId, receiver);
+                if (nextPayerTarget != null) 
                 {
+                    await _clientNotificationService.NotifyReturnTribute(gameId, receiver, nextPayerTarget.PayerId, nextPayerTarget.ReturnTributeCount);
+                    return Ok();
+                }
 
-                    foreach (var playerId in cardsAfteReturnTribute.Keys)
-                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfteReturnTribute[playerId]));
+                if (cardsAfterReturnTribute.Count != 0)    // the last player has finished pay tribute
+                {
+                    foreach (var playerId in cardsAfterReturnTribute.Keys)
+                        await _clientNotificationService.SendCardUpdate(gameId, playerId, _cardHelper.ConvertCardsToIds(cardsAfterReturnTribute[playerId]).ToList());
 
-                    // notify ace go public
-                    var playerTypeList = _gameService.GetPlayerTypeList(gameId).ToList();
-                    for (var id = 0; id < playerTypeList.Count; ++id)
-                        await _clientNotificationService.AskAllAceGoPublic(gameId, id, playerTypeList[id]);
+                    // Start AceGoPublic After return tribute
+                    StartAceGoPublic(gameId);
                 }
 
                 return Ok();
             }
             catch (ArgumentException e)
             {
-                _logger.LogError(e, "Argument Exception");
+                _logger.LogError(e.Message);
                 return BadRequest();
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Exception");
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        private void StartAceGoPublic(int gameId)
+        {
+            // notify ace go public
+            var isPublicAceList = _gameService.IsBlackAceList(gameId).ToList();
+            for (var id = 0; id < isPublicAceList.Count; ++id)
+                _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
+        }
+
+        /// <summary>
+        /// Set player to public ace
+        /// </summary>
+        [HttpPost("{gameId:int}/acegopublic")]
+        public async Task<IActionResult> AceGoPublic(int gameId, [FromQuery] int playerId, [FromQuery] bool IsGoPublic)
+        {
+            try
+            {   if(IsGoPublic)
+                    _gameService.AceGoPublic(gameId, playerId);
+                return Ok(gameId);
+            }
+            catch (ArgumentException e)
+            {
+                _logger.LogError(e.Message);
+                return BadRequest();
+            }
+
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Error in {nameof(AceGoPublic)}!");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }

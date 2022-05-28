@@ -15,9 +15,11 @@
             </button>
             break;
         case ClientState.ReturningTribute:
-            <button type="button" class="button" name="returnTribute" @onclick="OnReturnTributeButtonClicked">
-                确认
-            </button>
+
+        
+      <ReturnTributeComponent ProcessReturnTribute=@ProcessReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
+    
+            
             break;
         case ClientState.AceGoingPublic:
             <button type="button" class="button" name="aceGoPublic" @onclick="OnAceGoPublicButtonClicked">
@@ -42,6 +44,15 @@
 
 
 @code {
+
+    int payer;
+    int cardsCountReturnToPayer;
+
+    [Parameter]
+    public Func<bool, Task> ProcessAceGoPublic { get; set; }
+    [Parameter]
+    public Func<List<int>, int, Task> ProcessReturnTribute { get; set; }
+
     private ClientState clientState = ClientState.Default;
 
     private enum ClientState
@@ -57,11 +68,21 @@
 
     private void OnSkipButtonClicked() { }
 
-    private void OnReturnTributeButtonClicked() { }
 
-    private void OnAceGoPublicButtonClicked() { }
 
-    private void OnAceStayPrivateButtonClicked() { }
+    private void OnAceGoPublicButtonClicked()
+    {
+        ProcessAceGoPublic(true);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
+
+    private void OnAceStayPrivateButtonClicked()
+    {
+        ProcessAceGoPublic(false);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
 
     private void OnPlayAnotherRoundButtonClicked() { }
 
@@ -82,8 +103,12 @@
 
     private void OnNotifyAceGoPublic(object? sender, NotifyAceGoPublicEventArgs e)
     {
-        clientState = ClientState.AceGoingPublic;
-        StateHasChanged();
+        if (e.IsPublicAce)
+        {
+            clientState = ClientState.AceGoingPublic;
+            StateHasChanged();
+        }
+       
     }
 
     private void OnNotifyPlayAnotherRound(object? sender, NotifyPlayAnotherRoundEventArgs e)
@@ -92,8 +117,10 @@
         StateHasChanged();
     }
 
-    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs e)
+    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
+        payer = args.Payer;
+        cardsCountReturnToPayer = args.CardsToBeReturnCount;
         clientState = ClientState.ReturningTribute;
         StateHasChanged();
     }

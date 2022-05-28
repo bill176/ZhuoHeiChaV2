@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace ZhuoHeiChaUI.Events
 {
-    public class NotifyAskAceGoPublicEventArgs : EventArgs
+    public class NotifyCardsUpdatedEventArgs : EventArgs
     {
+        public List<int> UpdatedCard { get; set; }
     }
 }

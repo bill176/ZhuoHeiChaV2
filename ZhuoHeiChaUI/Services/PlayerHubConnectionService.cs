@@ -17,11 +17,11 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyNewPlayerAddedEventArgs> NotifyNewPlayerAdded;
         public event EventHandler<NotifyPlayCardEventArgs> NotifyPlayCard;
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
-        public event EventHandler<NotifyAskAceGoPublicEventArgs> NotifyAskAceGoPublic;
         public event EventHandler<NotifyPlayAnotherRoundEventArgs> NotifyPlayAnotherRound;
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
         public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
+        public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
 
         /// <summary>
@@ -63,33 +63,44 @@ namespace ZhuoHeiChaUI.Services
             _connection.On(ClientHubMethods.PlayCard,
                 () => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs()));
 
-            _connection.On(ClientHubMethods.AskAceGoPublic,
-                () => NotifyAskAceGoPublic?.Invoke(this, new NotifyAskAceGoPublicEventArgs()));
-
-            _connection.On(ClientHubMethods.AceGoPublic,
-                () => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs()));
+            _connection.On<bool>(ClientHubMethods.AceGoPublic,
+                (isPublicAce) => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs
+                {
+                    IsPublicAce = isPublicAce
+                }));
 
             _connection.On(ClientHubMethods.PlayAnotherRound,
                 () => NotifyPlayAnotherRound?.Invoke(this, new NotifyPlayAnotherRoundEventArgs()));
 
-            _connection.On(ClientHubMethods.ReturnTribute,
-                () => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs()));
+            _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
+                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs 
+                { 
+                    Payer = payer,
+                    CardsToBeReturnCount = cardsToBeReturnCount
+                }));
 
             _connection.On(ClientHubMethods.PlayHandSuccess,
                 () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
 
-            _connection.On(ClientHubMethods.UpdateCards,
+            _connection.On(ClientHubMethods.UpdateOpponentCardsCount,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));
 
             _connection.On(ClientHubMethods.CanStartGame,
                 () => NotifyCanStartGame?.Invoke(this, null));
 
+            _connection.On<List<int>>(ClientHubMethods.UpdateCards,
+                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs 
+                {
+                    UpdatedCard = cards
+                }));
+
+
             _connection.On<InitalGamePackage>(ClientHubMethods.InitializeGameState,
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
-                    cardAfter = initalGamePackage.CardAfter,
-                    cardBefore = initalGamePackage.CardBefore,
-                    tributeList = initalGamePackage.TributeList
+                    CardAfter = initalGamePackage.CardAfter,
+                    CardBefore = initalGamePackage.CardBefore,
+                    PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound
 
                 }));
 

@@ -7,5 +7,7 @@ namespace ZhuoHeiChaUI.Events
 {
     public class NotifyReturnTributeEventArgs : EventArgs
     {
+        public int Payer { get; set; }
+        public int CardsToBeReturnCount { get; set; }
     }
 }

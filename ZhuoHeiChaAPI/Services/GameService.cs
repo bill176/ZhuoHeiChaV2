@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Linq;
 using ZhuoHeiChaCore;
 using ZhuoHeiChaCore.Factories;
 using ZhuoHeiChaCore.ReturnTypeAndValue;
@@ -11,12 +12,54 @@ namespace ZhuoHeiChaAPI.Services
 {
     public class GameService : IGameService
     {
+        // This table is for Returning Tribute one by one, is has form: <gameId, <receiverId, PayerInfo>>, PayerInfo contains
+        // payerId and how many cards needed to be returned. With this table, we can call NotifyReturnTribute in GameController
+        // one by one.
+        private Dictionary<int, Dictionary<int, List<PayerInfo>>> _returnTable = new Dictionary<int, Dictionary<int, List<PayerInfo>>>();
+
         private int _gameCounter;
         private readonly ConcurrentDictionary<int, (IGame, object)> _gameSessions = new ConcurrentDictionary<int, (IGame, object)>();
 
         private readonly ILogger<GameService> _logger;
         private readonly ICardHelper _cardHelper;
         private readonly IGameFactory _gameFactory;
+
+
+
+        public void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount) 
+        {
+            _returnTable[gameId] = new Dictionary<int, List<PayerInfo>>();
+
+            foreach (var receiverId in returnTributeListByPlayerId.Keys) 
+            {
+                
+                _returnTable[gameId][receiverId] = new List<PayerInfo>();
+
+                var ReturnTributeList = returnTributeListByPlayerId[receiverId].ToList();
+                var cardsToBeReturnCountList = cardsToBeReturnCount[receiverId].ToList();
+                
+                for (int i = 0; i < ReturnTributeList.Count; i++) 
+                {
+                    _returnTable[gameId][receiverId].Add(new PayerInfo
+                    {
+                        PayerId = ReturnTributeList[i],
+                        IsFinishedReturnTribute = false,
+                        ReturnTributeCount = cardsToBeReturnCountList[i]
+                    });
+                }
+            }
+                
+        }
+
+        public PayerInfo GetNextPayerTarget(int gameId, int receiverId)
+        {
+            return _returnTable[gameId][receiverId].FirstOrDefault(x => x.IsFinishedReturnTribute == false);
+        }
+
+        public void SetPayerTargetToValid(int gameId, int receiverId, int payerId) 
+        {
+            var a = _returnTable[gameId][receiverId].Find(x => x.PayerId == payerId).IsFinishedReturnTribute = true;
+        }
 
         public GameService(ILogger<GameService> logger, ICardHelper cardHelper, IGameFactory gameFactory)
         {
@@ -77,7 +120,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> card)
+        public ReturnTributeReturnValue ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> card)
         {
             // check if game id is valid
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -125,7 +168,7 @@ namespace ZhuoHeiChaAPI.Services
             }
         }
 
-        public IEnumerable<PlayerType> GetPlayerTypeList(int gameId)
+        public IEnumerable<bool> IsBlackAceList(int gameId)
         {
             // assume gameId is always valid since it's called after ReturnTribute succeeded
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
@@ -133,11 +176,8 @@ namespace ZhuoHeiChaAPI.Services
                 throw new Exception($"Failed to get playerTypes for game {gameId}");
             }
 
-            var (game, lockObject) = gameLockPair;
-            lock (lockObject)
-            {
-                return game.PlayerTypeList;
-            }
+            return game.IsBlackAceList();
+            
         }
 
         public int GetGameCapacity(int gameId)
@@ -155,12 +195,24 @@ namespace ZhuoHeiChaAPI.Services
     public interface IGameService
     {
         InitGameReturnValue InitGame(int gameId, int numOfDecks = 1);
-        Dictionary<int, IEnumerable<Card>> ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> cardIds);
+        ReturnTributeReturnValue ReturnTribute(int gameId, int payer, int receiver, IEnumerable<Card> cardIds);
         int AddPlayerToGame(int gameId);
         int CreateNewGame(int capacity);
         void AceGoPublic(int gameId, int goPublicPlayerId);
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
-        IEnumerable<PlayerType> GetPlayerTypeList(int gameId);
+        IEnumerable<bool> IsBlackAceList(int gameId);
         int GetGameCapacity(int gameId);
+        void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount);
+        PayerInfo GetNextPayerTarget(int gameId, int receiverId);
+        void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
+    }
+
+
+    public class PayerInfo
+    {
+        public int PayerId { get; set; }
+        public bool IsFinishedReturnTribute { get; set; }
+        public int ReturnTributeCount { get; set; }
     }
 }
+

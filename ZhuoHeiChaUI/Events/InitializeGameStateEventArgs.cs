@@ -7,8 +7,8 @@ namespace ZhuoHeiChaUI.Events
 {
     public class InitializeGameStateEventArgs : EventArgs
     {
-        public List<int> cardBefore;
-        public List<int> cardAfter;
-        public List<int> tributeList;
+        public List<int> CardBefore { get; set; }
+        public List<int> CardAfter { get; set; }
+        public List<int> PlayerTypeListThisRound { get; set; }
     }
 }
