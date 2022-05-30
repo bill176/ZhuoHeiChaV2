@@ -8,15 +8,15 @@
 @using ZhuoHeiChaUI.Events
 @using ZhuoHeiChaUI.Components
 
-@if (!successJoin)
+@*@if (!successJoin)
 {
     <div>
-    <h3>Enter your name</h3>
-    <button @onclick="AddToGame">Enter</button>
-    <div>
-        <label>Your name</label>
-        <input @bind="@userName" />
-    </div>
+        <h3>Enter your name</h3>
+        <button @onclick="AddToGame">Enter</button>
+        <div>
+            <label>Your name</label>
+            <input @bind="@userName" />
+        </div>
     </div>
 }
 else
@@ -33,9 +33,43 @@ else
         <p>Wait dealer to start game</p>
     }
 
-    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ></ButtonContainer>
-    
-}        
+    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
+
+}*@
+
+@switch (gameState)
+{
+    case GameState.Default:
+        <div>
+            <h3>Enter your name</h3>
+            <button @onclick="AddToGame">Enter</button>
+            <div>
+                <label>Your name</label>
+                <input @bind="@userName" />
+            </div>
+        </div>
+        break;
+
+    case GameState.WaitingToStart:
+        <p>Wait dealer to start game...</p>
+        <p>Current player(s):</p>
+        <WaitingPlayerList Players="@players" />
+        @if (playerId == "0")
+        {
+            <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
+        }
+        else
+        {
+            <p>Wait dealer to start game</p>
+        }
+
+        break;
+
+    case GameState.DisplayingCard:
+        <PlayingCards CardIds=@cards IsInteractive=false></PlayingCards>
+        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
+        break;
+}
 
 
 
@@ -43,17 +77,22 @@ else
     [Parameter]
     public int GameId { get; set; }
 
+    private GameState gameState = GameState.Default;
+
+    private enum GameState
+    {
+        Default,
+        WaitingToStart,
+        DisplayingCard
+    }
+
     private string playerId;
     private string userName;
-    private bool successJoin = false;
     private bool canStartGame = false;
     private List<Player> players = new List<Player>();
     private List<int> cards = new List<int>();
 
     private List<int> PlayerTypeListThisRound;
-    bool ReturnTributeUIFlag = false;
-    bool StartGameUIFlag = true;
-    bool ButtonContainerUIFlag = false;
 
     private HubConnection _hubConnection;
 
@@ -75,15 +114,15 @@ else
 
         var connectionId = await PlayerHubConnection.EstablishConnection();
         var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
-        {
-            ConnectionId = connectionId,
-            Name = userName
-        });
+            {
+                ConnectionId = connectionId,
+                Name = userName
+            });
         if (!response.IsSuccessStatusCode) return;
 
         playerId = await response.Content.ReadAsStringAsync();
         Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
-        successJoin = true;
+        gameState = GameState.WaitingToStart;
         StateHasChanged();
     }
 
@@ -97,9 +136,6 @@ else
         }
         Console.WriteLine("Game successfully started!");
 
-        // hide start game (or waiting for start game) UI
-        StartGameUIFlag = false;
-        StateHasChanged();
     }
 
     private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
@@ -112,7 +148,7 @@ else
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
-
+        gameState = GameState.DisplayingCard;
         StateHasChanged();
     }
 
@@ -127,16 +163,12 @@ else
 
     private async Task ProcessReturnTribute(List<int> cardsToBeReturned, int payer)
     {
-        ReturnTributeUIFlag = false;
-        StateHasChanged();
         string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?receiver={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
 
         if (!response.IsSuccessStatusCode)
         {
             Console.WriteLine($"Failed return cards to {payer}!");
-            ReturnTributeUIFlag = true;
-            StateHasChanged();
             return;
         }
 

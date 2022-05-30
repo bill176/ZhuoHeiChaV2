@@ -60,8 +60,11 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<string>(ClientHubMethods.ReceiveMessage,
                 (message) => ReceiveMessage?.Invoke(this, new ReceiveMessageEventArgs { Message = message }));
 
-            _connection.On(ClientHubMethods.PlayCard,
-                () => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs()));
+            _connection.On<int>(ClientHubMethods.NotifyPlayCard,
+                (currentPlayerId) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs 
+                {
+                    CurrentPlayerId = currentPlayerId
+                }));
 
             _connection.On<bool>(ClientHubMethods.AceGoPublic,
                 (isPublicAce) => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs

@@ -117,7 +117,7 @@ namespace ZhuoHeiChaCore.Test
         public void InitGame_1deck3Players_Should_get_their_random_cards_for_test()
         {
             _cardsInHandByPlayerId.Clear();
-            _remainingPlayers.AddRange(new List<int> { 0, 1, 2 });
+            RemainingPlayers.AddRange(new List<int> { 0, 1, 2 });
             _tributePairs.Clear();
             _playerTypeList.Clear();
             InitGame();
@@ -132,7 +132,7 @@ namespace ZhuoHeiChaCore.Test
         public void InitGame_1deck3Players_Should_get_their_random_cards_full_deck()
         {
             _cardsInHandByPlayerId.Clear();
-            _remainingPlayers.AddRange(new List<int> { 0, 1, 2 });
+            RemainingPlayers.AddRange(new List<int> { 0, 1, 2 });
             _tributePairs.Clear();
             _playerTypeList.Clear();
             InitGame();
@@ -320,7 +320,7 @@ namespace ZhuoHeiChaCore.Test
         {
 
             _cardsInHandByPlayerId.Clear();
-            _remainingPlayers.AddRange(new List<int> { 0, 1, 2 });
+            RemainingPlayers.AddRange(new List<int> { 0, 1, 2 });
             _tributePairs.Clear();
             _playerTypeList.Clear();
             _playerTypeList.AddRange(new List<PlayerType> { PlayerType.Normal, PlayerType.Normal, PlayerType.PublicAce });
@@ -330,7 +330,7 @@ namespace ZhuoHeiChaCore.Test
             Assert.True(_finishOrder.Count == 0);
             Assert.True(_lastValidPlayer == 0);
             Assert.True(_lastValidHand == HandFactory.EMPTY_HAND);
-            Assert.True(_currentPlayer == 0);
+            Assert.True(CurrentPlayer == 0);
         }
 
 
@@ -340,8 +340,8 @@ namespace ZhuoHeiChaCore.Test
         [Fact]
         public void AceGoPublic_0_should_fail_2_should_work()
         {
-            _remainingPlayers.Clear();
-            _remainingPlayers.AddRange(new List<int> { 0, 1, 2 });
+            RemainingPlayers.Clear();
+            RemainingPlayers.AddRange(new List<int> { 0, 1, 2 });
             _playerTypeList.Clear();
             _playerTypeList.AddRange(new List<PlayerType> { PlayerType.Normal, PlayerType.Normal, PlayerType.Ace });
 

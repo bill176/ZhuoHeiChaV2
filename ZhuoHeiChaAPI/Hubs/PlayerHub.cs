@@ -23,7 +23,7 @@ namespace ZhuoHeiChaAPI.Hubs
         // for testing only!!!
         public async Task NotifyPlayCard()
         {
-            await Clients.Caller.SendAsync(ClientHubMethods.PlayCard);
+            await Clients.Caller.SendAsync(ClientHubMethods.NotifyPlayCard);
         }
     }
 }
