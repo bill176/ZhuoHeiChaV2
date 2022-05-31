@@ -69,6 +69,11 @@ else
         <PlayingCards CardIds=@cards IsInteractive=false></PlayingCards>
         <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
         break;
+
+    case GameState.PlayCard:
+        <PlayingCards CardIds=@cards IsInteractive=true></PlayingCards>
+        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
+        break;
 }
 
 
@@ -83,7 +88,8 @@ else
     {
         Default,
         WaitingToStart,
-        DisplayingCard
+        DisplayingCard,
+        PlayCard
     }
 
     private string playerId;
@@ -103,6 +109,7 @@ else
         PlayerHubConnection.NotifyNewPlayerAdded += OnNotifyNewPlayerAdded;
         PlayerHubConnection.InitializeGameState += InitialGameState;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
+        PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
     }
 
     private async Task AddToGame()
@@ -156,6 +163,7 @@ else
     private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
     {
         cards = args.UpdatedCard;
+        StateHasChanged();
         Console.WriteLine(string.Join(",", cards));
 
     }
@@ -179,6 +187,17 @@ else
     {
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={playerId}&isGoPublic={IsGoPublic}", new { });
         Console.WriteLine("you just Publish the Ace!");
+    }
+
+    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
+    {
+        var currentPlayerId = args.CurrentPlayerId;
+        if (Int32.Parse(playerId) == currentPlayerId)
+        {
+            gameState = GameState.PlayCard;
+            Console.WriteLine("Please select your hand!");
+        }
+        Console.WriteLine($"Waiting for {currentPlayerId} to Play hand!");
     }
 
 
