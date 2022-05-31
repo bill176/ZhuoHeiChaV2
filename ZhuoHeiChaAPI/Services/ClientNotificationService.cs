@@ -100,6 +100,12 @@ namespace ZhuoHeiChaAPI.Services
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTribute, payer, returnTributeCount);
         }
+        public async Task NotifyPlayHand(int gameId, int playerId, int currentPlayerId)
+        {
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyPlayCard, currentPlayerId);
+        }
     }
 
     public interface IClientNotificationService
@@ -114,6 +120,7 @@ namespace ZhuoHeiChaAPI.Services
         Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
         Task NotifyCanStartGame(int gameId, int playerId);
         Task NotifyReturnTribute(int gameId, int receiver, int payer, int cardsToBeReturned);
+        Task NotifyPlayHand(int gameId, int playerId, int currentPlayerId);
 
         // TODO: complete this list for things such as NotifyAceGoPublic, NotifyCardsBeforeTribute, etc.
     }

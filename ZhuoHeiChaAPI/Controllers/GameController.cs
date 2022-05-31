@@ -248,6 +248,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {   if(IsGoPublic)
                     _gameService.AceGoPublic(gameId, playerId);
+                NotifyPlayHand(gameId);
                 return Ok(gameId);
             }
             catch (ArgumentException e)
@@ -263,6 +264,18 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+        private void NotifyPlayHand(int gameId) 
+        {
+            // get current player id
+            var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
+
+            var currentPlayerId = _gameService.GetCurrentPlayerId(gameId);
+            // for each
+            for (var i = 0; i < remainingPlayerList.Count; ++i) 
+            {
+                _clientNotificationService.NotifyPlayHand(gameId, i, currentPlayerId);
+            }
+        }
 
         [HttpPost("{gameId:int}/PlayHand")]
         public async Task<IActionResult> PlayHand(int gameId, int playerId, List<Card> UserCard)

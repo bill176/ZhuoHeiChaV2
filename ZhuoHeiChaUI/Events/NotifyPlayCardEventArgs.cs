@@ -7,6 +7,6 @@ namespace ZhuoHeiChaUI.Events
 {
     public class NotifyPlayCardEventArgs : EventArgs
     {
-
+        public int CurrentPlayerId { get; set; }
     }
 }

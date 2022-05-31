@@ -191,6 +191,31 @@ namespace ZhuoHeiChaAPI.Services
             var game = gameLockPair.Item1;
             return game.Capacity;
         }
+
+        public int GetCurrentPlayerId(int gameId)
+        {
+            // assume gameId is always valid since it's called after ReturnTribute succeeded
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get playerTypes for game {gameId}");
+            }
+
+            var game = gameLockPair.Item1;
+            return game.CurrentPlayer;
+
+        }
+        public IEnumerable<int> GetRemainingPlayerList(int gameId)
+        {
+            // assume gameId is always valid since it's called after ReturnTribute succeeded
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get playerTypes for game {gameId}");
+            }
+
+            var game = gameLockPair.Item1;
+            return game.RemainingPlayers;
+
+        }
     }
 
     public interface IGameService
@@ -206,6 +231,8 @@ namespace ZhuoHeiChaAPI.Services
         void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount);
         PayerInfo GetNextPayerTarget(int gameId, int receiverId);
         void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
+        IEnumerable<int> GetRemainingPlayerList(int gameId);
+        int GetCurrentPlayerId(int gameId);
     }
 
 
