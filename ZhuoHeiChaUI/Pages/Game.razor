@@ -194,17 +194,21 @@ else
     private async Task ProcessPlayHand(bool isSkip)
     {
         CanPlayHand = false;
-        StateHasChanged();
+        
         if (isSkip)
         {
             await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay=", new { });
             Console.WriteLine("Finish Skipping!");
+            SelectedCardIds = new List<int>();
+            StateHasChanged();
             return;
         }
 
         string cardsTobePlay = string.Join(",", SelectedCardIds);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay={cardsTobePlay}", new { });
         Console.WriteLine("Finish playing hand!");
+        SelectedCardIds = new List<int>();
+        StateHasChanged();
     }
 
     private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
@@ -213,14 +217,20 @@ else
         if (playerId == currentPlayerId)
         {
             CanPlayHand = true;
-            StateHasChanged();
             Console.WriteLine("Please select your hand!");
         }
         else
         {
             Console.WriteLine($"Waiting for {currentPlayerId} to Play hand!");
         }
-        
+        if (playerId == args.LastValidPlayer)
+        {
+            foreach (int card in args.LastHand)
+                if (cards.Contains(card))
+                    cards.Remove(card);
+        }
+        SelectedCardIds = new List<int>();
+        StateHasChanged();
         Console.WriteLine($"Last valid Player is {args.LastValidPlayer}!");
         var lastHand = string.Join(",", args.LastHand);
         Console.WriteLine($"Last Hand is {lastHand}!");
