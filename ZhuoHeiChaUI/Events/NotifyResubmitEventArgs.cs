@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ZhuoHeiChaUI.Events
 {
-    public class NotifyPlayHandSuccessEventArgs : EventArgs
+    public class NotifyResubmitEventArgs : EventArgs
     {
     }
 }

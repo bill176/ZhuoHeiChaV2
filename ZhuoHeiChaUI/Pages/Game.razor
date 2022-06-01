@@ -54,7 +54,7 @@ else
         <p>Wait dealer to start game...</p>
         <p>Current player(s):</p>
         <WaitingPlayerList Players="@players" />
-        @if (playerId == "0")
+        @if (playerId == 0)
         {
             <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
         }
@@ -66,16 +66,11 @@ else
         break;
 
     case GameState.DisplayingCard:
-        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ></ButtonContainer>
-    <PlayingCards CardIds="@cards" IsInteractive="false" @bind-SelectedCardIds="@SelectedCardIds" />
+        <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand></ButtonContainer>
+    <PlayingCards CardIds="@cards" IsInteractive="@CanPlayHand" @bind-SelectedCardIds="@SelectedCardIds" />
     <label>@string.Join(',', SelectedCardIds)</label>
         break;
 
-    case GameState.PlayCard:
-        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ></ButtonContainer>
-    <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
-    <label>@string.Join(',', SelectedCardIds)</label>
-        break;
 }
 
 
@@ -94,15 +89,15 @@ else
         PlayCard
     }
 
-    private string playerId;
+    private int playerId;
     private string userName;
     private bool canStartGame = false;
     private List<Player> players = new List<Player>();
     private List<int> cards = new List<int>();
+    private bool CanPlayHand = false;
 
     private List<int> PlayerTypeListThisRound;
 
-    // for testing
     private List<int> SelectedCardIds = new List<int>();
 
     private HubConnection _hubConnection;
@@ -115,6 +110,7 @@ else
         PlayerHubConnection.InitializeGameState += InitialGameState;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
+        PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
     }
 
     private async Task AddToGame()
@@ -132,7 +128,8 @@ else
             });
         if (!response.IsSuccessStatusCode) return;
 
-        playerId = await response.Content.ReadAsStringAsync();
+        var IdString = await response.Content.ReadAsStringAsync();
+        playerId = Int32.Parse(IdString);
         Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
         gameState = GameState.WaitingToStart;
         StateHasChanged();
@@ -194,22 +191,53 @@ else
         Console.WriteLine("you just Publish the Ace!");
     }
 
+    private async Task ProcessPlayHand(bool isSkip)
+    {
+        CanPlayHand = false;
+        StateHasChanged();
+        if (isSkip)
+        {
+            await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay=", new { });
+            Console.WriteLine("Finish Skipping!");
+            return;
+        }
+
+        string cardsTobePlay = string.Join(",", SelectedCardIds);
+        var response = await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay={cardsTobePlay}", new { });
+        Console.WriteLine("Finish playing hand!");
+    }
+
     private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
     {
         var currentPlayerId = args.CurrentPlayerId;
-        if (Int32.Parse(playerId) == currentPlayerId)
+        if (playerId == currentPlayerId)
         {
-            gameState = GameState.PlayCard;
+            CanPlayHand = true;
+            StateHasChanged();
             Console.WriteLine("Please select your hand!");
         }
-        Console.WriteLine($"Waiting for {currentPlayerId} to Play hand!");
+        else
+        {
+            Console.WriteLine($"Waiting for {currentPlayerId} to Play hand!");
+        }
+        
+        Console.WriteLine($"Last valid Player is {args.LastValidPlayer}!");
+        var lastHand = string.Join(",", args.LastHand);
+        Console.WriteLine($"Last Hand is {lastHand}!");
+    }
+
+    private void OnNotifyResubmit(object? sender, NotifyResubmitEventArgs args)
+    {
+        Console.WriteLine($"Failed playing hand! Reselect your card");
+        CanPlayHand = true;
+        StateHasChanged();
     }
 
 
     #region NotificationHandlers
     private void OnNotifyCanStartGame(object? sender, EventArgs args)
     {
-        if (playerId != "0")
+        if (playerId != 0)
         {
             Console.WriteLine("Non-host player should not receive this notification!");
             return;

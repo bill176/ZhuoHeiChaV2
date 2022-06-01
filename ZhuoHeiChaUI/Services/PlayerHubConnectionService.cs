@@ -19,7 +19,7 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
         public event EventHandler<NotifyPlayAnotherRoundEventArgs> NotifyPlayAnotherRound;
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
-        public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
+        public event EventHandler<NotifyResubmitEventArgs> NotifyResubmit;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
         public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
@@ -60,10 +60,12 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<string>(ClientHubMethods.ReceiveMessage,
                 (message) => ReceiveMessage?.Invoke(this, new ReceiveMessageEventArgs { Message = message }));
 
-            _connection.On<int>(ClientHubMethods.NotifyPlayCard,
-                (currentPlayerId) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs 
+            _connection.On<PlayHandPackage>(ClientHubMethods.NotifyPlayCard,
+                (playHandPackage) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs 
                 {
-                    CurrentPlayerId = currentPlayerId
+                    CurrentPlayerId = playHandPackage.CurrentPlayer,
+                    LastValidPlayer = playHandPackage.LastValidPlayer,
+                    LastHand = playHandPackage.LastHand
                 }));
 
             _connection.On<bool>(ClientHubMethods.AceGoPublic,
@@ -82,8 +84,8 @@ namespace ZhuoHeiChaUI.Services
                     CardsToBeReturnCount = cardsToBeReturnCount
                 }));
 
-            _connection.On(ClientHubMethods.PlayHandSuccess,
-                () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
+            _connection.On(ClientHubMethods.NotifyResubmit,
+                () => NotifyResubmit?.Invoke(this, new NotifyResubmitEventArgs()));
 
             _connection.On(ClientHubMethods.UpdateOpponentCardsCount,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));

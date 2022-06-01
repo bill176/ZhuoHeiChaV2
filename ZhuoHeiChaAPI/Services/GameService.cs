@@ -204,6 +204,20 @@ namespace ZhuoHeiChaAPI.Services
             return game.CurrentPlayer;
 
         }
+
+        public int GetLastValidPlayer(int gameId)
+        {
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get LastValidPlayer for game {gameId}");
+            }
+
+            var game = gameLockPair.Item1;
+            return game.LastValidPlayer;
+
+        }
+
+
         public IEnumerable<int> GetRemainingPlayerList(int gameId)
         {
             // assume gameId is always valid since it's called after ReturnTribute succeeded
@@ -233,6 +247,7 @@ namespace ZhuoHeiChaAPI.Services
         void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
         IEnumerable<int> GetRemainingPlayerList(int gameId);
         int GetCurrentPlayerId(int gameId);
+        int GetLastValidPlayer(int gameId);
     }
 
 

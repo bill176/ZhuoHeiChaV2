@@ -49,9 +49,15 @@
     int cardsCountReturnToPayer;
 
     [Parameter]
+    public int PlayerId { get; set; }
+
+    [Parameter]
     public Func<bool, Task> ProcessAceGoPublic { get; set; }
     [Parameter]
     public Func<List<int>, int, Task> ProcessReturnTribute { get; set; }
+
+    [Parameter]
+    public Func<bool, Task> ProcessPlayHand { get; set; }
 
     private ClientState clientState = ClientState.Default;
 
@@ -64,9 +70,19 @@
         AskingAnotherRound
     }
 
-    private void OnPlayCardButtonClicked() { }
+    private void OnPlayCardButtonClicked()
+    {
+        ProcessPlayHand(false);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
 
-    private void OnSkipButtonClicked() { }
+    private void OnSkipButtonClicked()
+    {
+        ProcessPlayHand(true);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
 
 
 
@@ -92,10 +108,21 @@
         PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
         PlayerHubConnection.NotifyPlayAnotherRound += OnNotifyPlayAnotherRound;
         PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
-        PlayerHubConnection.NotifyPlayHandSuccess += OnNotifyPlayHandSuccess;
+        PlayerHubConnection.NotifyResubmit += OnNotifyPlayHandSuccess;
+        PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
     }
 
-    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs e)
+    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
+    {
+        var currentPlayerId = args.CurrentPlayerId;
+        if (PlayerId == currentPlayerId)
+        {
+            clientState = ClientState.Playing;
+            StateHasChanged();
+        }
+    }
+
+    private void OnNotifyResubmit(object? sender, NotifyResubmitEventArgs args)
     {
         clientState = ClientState.Playing;
         StateHasChanged();
@@ -125,7 +152,7 @@
         StateHasChanged();
     }
 
-    private void OnNotifyPlayHandSuccess(object? sender, NotifyPlayHandSuccessEventArgs e)
+    private void OnNotifyPlayHandSuccess(object? sender, NotifyResubmitEventArgs e)
     {
         clientState = ClientState.Default;
         StateHasChanged();

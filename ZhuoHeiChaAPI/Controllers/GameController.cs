@@ -248,7 +248,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {   if(IsGoPublic)
                     _gameService.AceGoPublic(gameId, playerId);
-                NotifyPlayHand(gameId);
+                NotifyPlayHand(gameId, new List<int>());
                 return Ok(gameId);
             }
             catch (ArgumentException e)
@@ -264,34 +264,51 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void NotifyPlayHand(int gameId) 
+        private void NotifyPlayHand(int gameId, List<int> lastHand) 
         {
             // get current player id
             var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
-
+            var lastValidPlayer = _gameService.GetLastValidPlayer(gameId);
             var currentPlayerId = _gameService.GetCurrentPlayerId(gameId);
-            // for each
+
+            var playHandPackage = new PlayHandPackage
+            {
+                CurrentPlayer = currentPlayerId,
+                LastValidPlayer = lastValidPlayer,
+                LastHand = lastHand
+            };
+            // notify each remaining players, and twll thwm who is the cureent player
             for (var i = 0; i < remainingPlayerList.Count; ++i) 
             {
-                _clientNotificationService.NotifyPlayHand(gameId, i, currentPlayerId);
+                _clientNotificationService.NotifyPlayHand(gameId, i, playHandPackage);
             }
         }
 
         [HttpPost("{gameId:int}/PlayHand")]
-        public async Task<IActionResult> PlayHand(int gameId, int playerId, List<Card> UserCard)
+        public async Task<IActionResult> PlayHand(int gameId, [FromQuery] int playerId, [FromQuery] string cardsTobePlay)
         {
             try
             {
-                var updatedCardsByPlayer = _gameService.PlayHand(gameId, playerId, UserCard);
+                IEnumerable<int> card_ids;
+                if (cardsTobePlay == null)
+                    card_ids = new List<int>();
+                else
+                    card_ids = cardsTobePlay.Split(',').Select(Int32.Parse);
+                var userCards = _cardHelper.ConvertIdsToCards(card_ids).ToList();
+                var updatedCardsByPlayer = _gameService.PlayHand(gameId, playerId, userCards);
                 switch (updatedCardsByPlayer.Type)
                 {
                     case PlayHandReturnType.Resubmit:
                         // tell player:{playerId} the error message 
+                        await _clientNotificationService.SendMessageToClient(gameId, playerId, updatedCardsByPlayer.ErrorMessage);
+                        await _clientNotificationService.NotifyResubmit(gameId, playerId);
                         break;
 
                     case PlayHandReturnType.PlayHandSuccess:
                         // tell frontend: current player, last valid player, last valid hand
-                        // tell frontend change player:{playerId} UI(hide playhand botton), change player:{current player} UI(show playhand button)                        
+                        // tell frontend change player:{playerId} UI(hide playhand botton), change player:{current player} UI(show playhand button)
+                        var lastHand = _cardHelper.ConvertCardsToIds(updatedCardsByPlayer.UpdatedCards).ToList();
+                        NotifyPlayHand(gameId, lastHand);
                         break;
 
                     case PlayHandReturnType.GameEnded:
@@ -306,7 +323,7 @@ namespace ZhuoHeiChaAPI.Controllers
             catch (ArgumentException e)
             {
                 _logger.LogError(e, "Argument Exception");
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception e)
             {

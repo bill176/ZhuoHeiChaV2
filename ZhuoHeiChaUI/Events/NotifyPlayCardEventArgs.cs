@@ -8,5 +8,7 @@ namespace ZhuoHeiChaUI.Events
     public class NotifyPlayCardEventArgs : EventArgs
     {
         public int CurrentPlayerId { get; set; }
+        public int LastValidPlayer { get; set; }
+        public List<int> LastHand { get; set; }
     }
 }

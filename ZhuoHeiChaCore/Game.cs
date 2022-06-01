@@ -20,7 +20,7 @@ namespace ZhuoHeiChaCore
         protected readonly List<int> _finishOrder = new List<int>();
 
         public int CurrentPlayer { get; private set; }= 0;
-        protected int _lastValidPlayer = 0;
+        public int LastValidPlayer { get; private set; } = 0;
         protected Hand _lastValidHand = HandFactory.EMPTY_HAND;
         protected bool _didBlackAceWin = false;
 
@@ -111,7 +111,7 @@ namespace ZhuoHeiChaCore
 
             CurrentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
-            _lastValidPlayer = 0;
+            LastValidPlayer = 0;
             _didBlackAceWin = false;
 
             // save card list after paying tribute
@@ -291,7 +291,7 @@ namespace ZhuoHeiChaCore
 
             _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
             CurrentPlayer = goPublicPlayerId;
-            _lastValidPlayer = goPublicPlayerId;
+            LastValidPlayer = goPublicPlayerId;
         }
 
         /// <summary>
@@ -322,7 +322,7 @@ namespace ZhuoHeiChaCore
                 return new PlayHandReturn(PlayHandReturnType.Resubmit, " Hand is not valid ");
             }
 
-            if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // currentPlayer cannot skip
+            if (userHand.Group == HandFactory.EMPTY_HAND.Group && LastValidPlayer != playerId)    // currentPlayer cannot skip
             {
                 // change current player to the next one.
                 while (!RemainingPlayers.Contains(possible_next_player))
@@ -331,10 +331,10 @@ namespace ZhuoHeiChaCore
                 }
                 CurrentPlayer = possible_next_player;
 
-                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess);
+                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, new List<Card>(), CurrentPlayer);
             }
 
-            if (_lastValidPlayer == playerId)
+            if (LastValidPlayer == playerId)
                 if (userHand.Group == HandFactory.EMPTY_HAND.Group)      // currentPlayer cannot skip
                     return new PlayHandReturn(PlayHandReturnType.Resubmit, " dealer cannot skip ");
                 else
@@ -356,7 +356,7 @@ namespace ZhuoHeiChaCore
             }
             CurrentPlayer = possible_next_player;
 
-            _lastValidPlayer = playerId;
+            LastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
             if (CheckGameEnded())
                 return new PlayHandReturn(PlayHandReturnType.GameEnded);
@@ -373,12 +373,12 @@ namespace ZhuoHeiChaCore
                 RemainingPlayers.Remove(playerId);
                 _lastValidHand = HandFactory.EMPTY_HAND;
                 // change next valid player to the next one.
-                int possible_next_valid_player = (_lastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
+                int possible_next_valid_player = (LastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
                 while (!RemainingPlayers.Contains(possible_next_valid_player))
                 {
                     possible_next_valid_player = (possible_next_valid_player + 1) % _cardsInHandByPlayerId.Count;
                 }
-                _lastValidPlayer = possible_next_valid_player;
+                LastValidPlayer = possible_next_valid_player;
             }
 
         }
@@ -410,6 +410,7 @@ namespace ZhuoHeiChaCore
     {
         List<int> RemainingPlayers { get;}
         int CurrentPlayer { get; }
+        int LastValidPlayer { get; }
         IEnumerable<bool> IsBlackAceList();
         int Capacity { get; }
 
