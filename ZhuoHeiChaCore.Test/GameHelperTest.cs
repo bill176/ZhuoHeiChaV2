@@ -94,9 +94,9 @@ namespace ZhuoHeiChaCore.Test
                 },
                 new object[]
                 {
-                    new List<int> { 3, 0, 2, 1 },
+                    new List<int> { 3, 2, 1, 0 },
                     new List<PlayerType> { PlayerType.Normal, PlayerType.Normal, PlayerType.Ace, PlayerType.Normal },
-                    new List<List<int>> { new List<int> { 3, 0 }, new List<int> { 2 }, new List<int> { 1 } }
+                    new List<List<int>> { new List<int> { 3 }, new List<int> { 2 }, new List<int> { 1, 0 } }
                 },
                 new object[]
                 {
