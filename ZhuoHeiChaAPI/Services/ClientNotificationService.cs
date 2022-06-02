@@ -120,6 +120,10 @@ namespace ZhuoHeiChaAPI.Services
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyResubmit);
         }
+        public async Task NotifyGameEnded(int gameId, bool isBlackAceWin)
+        {
+            await _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.NotifyGameEnded, isBlackAceWin);
+        }
     }
 
     public interface IClientNotificationService
@@ -137,7 +141,7 @@ namespace ZhuoHeiChaAPI.Services
         Task NotifyReturnTribute(int gameId, int receiver, int payer, int cardsToBeReturned);
         Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage);
         Task NotifyResubmit(int gameId, int playerId);
+        Task NotifyGameEnded(int gameId, bool blackAceWin);
 
-        // TODO: complete this list for things such as NotifyAceGoPublic, NotifyCardsBeforeTribute, etc.
     }
 }

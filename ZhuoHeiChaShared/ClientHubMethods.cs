@@ -18,5 +18,7 @@ namespace ZhuoHeiChaShared
         public static readonly string InitializeGameState = nameof(InitializeGameState);
         public static readonly string NewPlayerAdded = nameof(NewPlayerAdded);
         public static readonly string NotifyReturnTribute = nameof(NotifyReturnTribute);
+        public static readonly string NotifyGameEnded = nameof(NotifyGameEnded);
+        
     }
 }

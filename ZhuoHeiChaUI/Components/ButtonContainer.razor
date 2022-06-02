@@ -16,10 +16,10 @@
             break;
         case ClientState.ReturningTribute:
 
-        
-      <ReturnTributeComponent ProcessReturnTribute=@ProcessReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
-    
-            
+
+            <ReturnTributeComponent ProcessReturnTribute=@ProcessReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
+
+
             break;
         case ClientState.AceGoingPublic:
             <button type="button" class="button" name="aceGoPublic" @onclick="OnAceGoPublicButtonClicked">
@@ -33,6 +33,9 @@
             <div class="another-round">
                 <button type="button" class="button" name="playAnotherRound" @onclick="OnPlayAnotherRoundButtonClicked">
                     再来!
+                </button>
+                <button type="button" class="button" name="playAnotherRound" @onclick="OnNotPlayAnotherRoundButtonClicked">
+                    算了!
                 </button>
             </div>
             break;
@@ -58,6 +61,10 @@
 
     [Parameter]
     public Func<bool, Task> ProcessPlayHand { get; set; }
+
+    [Parameter]
+    public Func<bool, Task> PlayOneMoreRound { get; set; }
+
 
     private ClientState clientState = ClientState.Default;
 
@@ -100,7 +107,20 @@
         StateHasChanged();
     }
 
-    private void OnPlayAnotherRoundButtonClicked() { }
+    private void OnPlayAnotherRoundButtonClicked()
+    {
+        // TODO: waiting dealer to start game
+        PlayOneMoreRound(true);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
+
+    private void OnNotPlayAnotherRoundButtonClicked()
+    {
+        PlayOneMoreRound(false);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
 
     protected override void OnInitialized()
     {
@@ -110,6 +130,7 @@
         PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
         PlayerHubConnection.NotifyResubmit += OnNotifyPlayHandSuccess;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
+        PlayerHubConnection.NotifyGameEnded += OnNotifyGameEnded;
     }
 
     private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
@@ -135,7 +156,7 @@
             clientState = ClientState.AceGoingPublic;
             StateHasChanged();
         }
-       
+
     }
 
     private void OnNotifyPlayAnotherRound(object? sender, NotifyPlayAnotherRoundEventArgs e)
@@ -155,6 +176,21 @@
     private void OnNotifyPlayHandSuccess(object? sender, NotifyResubmitEventArgs e)
     {
         clientState = ClientState.Default;
+        StateHasChanged();
+    }
+
+    private void OnNotifyGameEnded(object? sender, NotifyGameEndedEventArgs args)
+    {
+        if (args.IsBlackAceWin)
+        {
+            Console.WriteLine($"Black Ace Win");
+        }
+        else
+        {
+            Console.WriteLine($"Black Ace Loss");
+        }
+
+        clientState = ClientState.AskingAnotherRound;
         StateHasChanged();
     }
 }

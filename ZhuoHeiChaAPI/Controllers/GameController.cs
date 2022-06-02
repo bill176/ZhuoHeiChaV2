@@ -144,7 +144,7 @@ namespace ZhuoHeiChaAPI.Controllers
 
                 }
 
-                if (initGameReturn.IsFirstRound) 
+                if (initGameReturn.IsFirstRound)
                 {
                     // If the game is in first round, no need to return tribute, Start AceGoPublic directly
                     StartAceGoPublic(gameId);
@@ -198,11 +198,11 @@ namespace ZhuoHeiChaAPI.Controllers
                 var returnTributeValid = returnTributeReturnValue.returnTributeValid;
 
                 // if returned cards are valid, change flag value and begin returning cards to next payer.
-                
+
 
                 _gameService.SetPayerTargetToValid(gameId, receiver, payer);
                 var nextPayerTarget = _gameService.GetNextPayerTarget(gameId, receiver);
-                if (nextPayerTarget != null) 
+                if (nextPayerTarget != null)
                 {
                     await _clientNotificationService.NotifyReturnTribute(gameId, receiver, nextPayerTarget.PayerId, nextPayerTarget.ReturnTributeCount);
                     return Ok();
@@ -246,7 +246,8 @@ namespace ZhuoHeiChaAPI.Controllers
         public async Task<IActionResult> AceGoPublic(int gameId, [FromQuery] int playerId, [FromQuery] bool IsGoPublic)
         {
             try
-            {   if(IsGoPublic)
+            {
+                if (IsGoPublic)
                     _gameService.AceGoPublic(gameId, playerId);
                 NotifyPlayHand(gameId, new List<int>());
                 return Ok(gameId);
@@ -264,7 +265,7 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void NotifyPlayHand(int gameId, List<int> lastHand) 
+        private void NotifyPlayHand(int gameId, List<int> lastHand)
         {
             // get current player id
             var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
@@ -278,9 +279,9 @@ namespace ZhuoHeiChaAPI.Controllers
                 LastHand = lastHand
             };
             // notify each remaining players, and twll thwm who is the cureent player
-            for (var i = 0; i < remainingPlayerList.Count; ++i) 
+            foreach (var playerId in remainingPlayerList)
             {
-                _clientNotificationService.NotifyPlayHand(gameId, i, playHandPackage);
+                _clientNotificationService.NotifyPlayHand(gameId, playerId, playHandPackage);
             }
         }
 
@@ -313,7 +314,8 @@ namespace ZhuoHeiChaAPI.Controllers
 
                     case PlayHandReturnType.GameEnded:
                         // tell everyone gameended
-                        // call initGame()
+                        // TODO: need to know Ace win or not
+                        await _clientNotificationService.NotifyGameEnded(gameId, true);
                         break;
 
                 }
@@ -332,6 +334,12 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+
+        //[HttpPost("{gameId:int}/PlayOneMoreRound")]
+        //public async Task<IActionResult> PlayOneMoreRound(int gameId, [FromQuery] int playerId, [FromQuery] bool isPlayOneMoreRound)
+        //{
+
+        //}
 
 
 

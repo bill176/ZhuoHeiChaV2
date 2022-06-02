@@ -66,9 +66,9 @@ else
         break;
 
     case GameState.DisplayingCard:
-        <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand></ButtonContainer>
-    <PlayingCards CardIds="@cards" IsInteractive="@CanPlayHand" @bind-SelectedCardIds="@SelectedCardIds" />
-    <label>@string.Join(',', SelectedCardIds)</label>
+        <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand PlayOneMoreRound=@PlayOneMoreRound></ButtonContainer>
+        <PlayingCards CardIds="@cards" IsInteractive="@CanPlayHand" @bind-SelectedCardIds="@SelectedCardIds" />
+        <label>@string.Join(',', SelectedCardIds)</label>
         break;
 
 }
@@ -115,10 +115,6 @@ else
 
     private async Task AddToGame()
     {
-        //_hubConnection.On<IEnumerable<int>>(ClientHubMethods.UpdateCards, (updatedCards) =>
-        //{
-        //    cards = updatedCards;
-        //});
 
         var connectionId = await PlayerHubConnection.EstablishConnection();
         var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
@@ -194,7 +190,7 @@ else
     private async Task ProcessPlayHand(bool isSkip)
     {
         CanPlayHand = false;
-        
+
         if (isSkip)
         {
             await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay=", new { });
@@ -240,6 +236,13 @@ else
     {
         Console.WriteLine($"Failed playing hand! Reselect your card");
         CanPlayHand = true;
+        StateHasChanged();
+    }
+
+    private async Task PlayOneMoreRound(bool isPlayOneMoreRound)
+    {
+        // var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&isPlayOneMoreRound={isPlayOneMoreRound}", new { });
+        gameState = GameState.WaitingToStart;
         StateHasChanged();
     }
 

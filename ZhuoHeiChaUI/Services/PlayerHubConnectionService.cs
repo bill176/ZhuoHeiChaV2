@@ -23,6 +23,7 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
         public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
+        public event EventHandler<NotifyGameEndedEventArgs> NotifyGameEnded;
 
         /// <summary>
         /// Sets up and starts the connection to playerhub
@@ -61,7 +62,7 @@ namespace ZhuoHeiChaUI.Services
                 (message) => ReceiveMessage?.Invoke(this, new ReceiveMessageEventArgs { Message = message }));
 
             _connection.On<PlayHandPackage>(ClientHubMethods.NotifyPlayCard,
-                (playHandPackage) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs 
+                (playHandPackage) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs
                 {
                     CurrentPlayerId = playHandPackage.CurrentPlayer,
                     LastValidPlayer = playHandPackage.LastValidPlayer,
@@ -78,8 +79,8 @@ namespace ZhuoHeiChaUI.Services
                 () => NotifyPlayAnotherRound?.Invoke(this, new NotifyPlayAnotherRoundEventArgs()));
 
             _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
-                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs 
-                { 
+                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs
+                {
                     Payer = payer,
                     CardsToBeReturnCount = cardsToBeReturnCount
                 }));
@@ -94,7 +95,7 @@ namespace ZhuoHeiChaUI.Services
                 () => NotifyCanStartGame?.Invoke(this, null));
 
             _connection.On<List<int>>(ClientHubMethods.UpdateCards,
-                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs 
+                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs
                 {
                     UpdatedCard = cards
                 }));
@@ -111,6 +112,9 @@ namespace ZhuoHeiChaUI.Services
 
             _connection.On<List<Player>>(ClientHubMethods.NewPlayerAdded,
                 (players) => NotifyNewPlayerAdded?.Invoke(this, new NotifyNewPlayerAddedEventArgs { UpdatedPlayers = players }));
+
+            _connection.On<bool>(ClientHubMethods.NotifyGameEnded,
+                (isBlackAceWin) => NotifyGameEnded?.Invoke(this, new NotifyGameEndedEventArgs { IsBlackAceWin = isBlackAceWin }));
         }
     }
 }

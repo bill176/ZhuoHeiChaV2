@@ -10,7 +10,7 @@
                 var cardDisplayInfo = new CardDisplayInfo(cardId);
                 <li>
                     <a class="card @(cardDisplayInfo.StyleClasses) @(SelectedCardIds.Contains(cardId) ? "selected" : string.Empty)"
-                       @onclick="() => OnCardToggled(cardId)">
+               @onclick="() => OnCardToggled(cardId)">
                         <span class="rank">@cardDisplayInfo.DisplayRank</span>
                         <span class="suit">@cardDisplayInfo.DisplaySuit</span>
                     </a>
@@ -81,7 +81,7 @@
             // TODO: refactor all the constants used here
             if (cardId >= 52) return "-";
 
-            switch(cardId % 13)
+            switch (cardId % 13)
             {
                 case 8:
                     return "J";
