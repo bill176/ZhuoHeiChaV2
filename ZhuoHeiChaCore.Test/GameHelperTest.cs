@@ -31,13 +31,25 @@ namespace ZhuoHeiChaCore.Test
         {
             var gameHelper = new GameHelper();
 
-            // TODO: consider the case where we have Ace and then PublicAce in finish order. How should the return process be done?
-            var allDifferentPlayerTypes = new List<PlayerType> { PlayerType.Normal, PlayerType.Ace, PlayerType.PublicAce };
+            var differentPlayerTypes = new List<PlayerType> { PlayerType.Normal, PlayerType.Ace, PlayerType.Normal };
 
             var valueList = new List<int> { 0, 1, 2 };
-            var group1 = gameHelper.GroupConsecutivePlayersOfSameType(valueList, allDifferentPlayerTypes);
+            var group1 = gameHelper.GroupConsecutivePlayersOfSameType(valueList, differentPlayerTypes);
 
             Assert.Equal(valueList.Count, group1.Count);
+        }
+
+        [Fact]
+        public void GroupConsecutiveElementOfSameType_ShouldReturnTwoGroups_WhenThereAreBothAceAndPublicAceTogether()
+        {
+            var gameHelper = new GameHelper();
+
+            var playerTypes = new List<PlayerType> { PlayerType.Normal, PlayerType.Ace, PlayerType.PublicAce };
+
+            var valueList = new List<int> { 0, 1, 2 };
+            var group1 = gameHelper.GroupConsecutivePlayersOfSameType(valueList, playerTypes);
+
+            Assert.Equal(2, group1.Count);
         }
 
         [Fact]
