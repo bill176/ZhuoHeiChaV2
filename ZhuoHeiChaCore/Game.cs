@@ -175,7 +175,7 @@ namespace ZhuoHeiChaCore
                 && !_gameHelper.HasFourTwo(_cardsInHandByPlayerId[_finishOrder[0]]))
                 return Enumerable.Empty<(int, int)>();
 
-            var finishGroupsSequence = _gameHelper.GroupConsecutivePlayersOfSameType(_finishOrder, idx => _playerTypeList[idx]);
+            var finishGroupsSequence = _gameHelper.GroupConsecutivePlayersOfSameType(_finishOrder, _playerTypeList);
             var payerReceiverPairs = _gameHelper.GeneratePayerReceiverPairsForConsecutiveGroups(finishGroupsSequence);
 
             return payerReceiverPairs.Where(pair => !_gameHelper.HasTwoCats(_cardsInHandByPlayerId[pair.payer]));
@@ -439,13 +439,4 @@ namespace ZhuoHeiChaCore
         void AceGoPublic(int goPublicPlayerId);
         PlayHandReturn PlayHand(int playerId, List<Card> UserCard);
     }
-
-    public enum PlayerType
-    {
-        Normal,
-        Ace,
-        PublicAce
-    }
-
-
 }
