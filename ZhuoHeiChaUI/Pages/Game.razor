@@ -9,33 +9,33 @@
 @using ZhuoHeiChaUI.Components
 
 @*@if (!successJoin)
-{
-    <div>
-        <h3>Enter your name</h3>
-        <button @onclick="AddToGame">Enter</button>
+    {
         <div>
-            <label>Your name</label>
-            <input @bind="@userName" />
+            <h3>Enter your name</h3>
+            <button @onclick="AddToGame">Enter</button>
+            <div>
+                <label>Your name</label>
+                <input @bind="@userName" />
+            </div>
         </div>
-    </div>
-}
-else
-{
-    <p>Wait dealer to start game...</p>
-    <p>Current player(s):</p>
-    <WaitingPlayerList Players="@players" />
-    @if (playerId == "0" && StartGameUIFlag)
-    {
-        <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
-    @if (StartGameUIFlag)
+    else
     {
-        <p>Wait dealer to start game</p>
-    }
+        <p>Wait dealer to start game...</p>
+        <p>Current player(s):</p>
+        <WaitingPlayerList Players="@players" />
+        @if (playerId == "0" && StartGameUIFlag)
+        {
+            <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
+        }
+        @if (StartGameUIFlag)
+        {
+            <p>Wait dealer to start game</p>
+        }
 
-    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
+        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
 
-}*@
+    }*@
 
 <Notification DisplayMessage="@DisplayMessage"></Notification>
 
@@ -71,8 +71,8 @@ else
         <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand PlayOneMoreRound=@PlayOneMoreRound></ButtonContainer>
         <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
         <label>@string.Join(',', SelectedCardIds)</label>
+        <LastHandComponent Players="@players"></LastHandComponent>
         break;
-
 }
 
 
