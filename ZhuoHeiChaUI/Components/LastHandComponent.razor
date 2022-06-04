@@ -1,0 +1,30 @@
+﻿@using ZhuoHeiChaUI.Pages
+@using ZhuoHeiChaShared
+@using ZhuoHeiChaUI.Events
+@using ZhuoHeiChaUI.Services
+@inject PlayerHubConnectionService PlayerHubConnection
+
+<h3>Last hand for player @_player?.Name:</h3>
+
+<PlayingCards CardIds="@_cards" IsInteractive="false"></PlayingCards>
+
+@code {
+    [Parameter]
+    public List<Player> Players { get; set; }
+
+    private Player _player;
+    private List<int> _cards = new List<int>();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        PlayerHubConnection.NotifyPlayCard += OnPlayCard;
+    }
+
+    private void OnPlayCard(object? sender, NotifyPlayCardEventArgs args)
+    {
+        _cards = args.LastHand;
+        _player = Players.First(p => p.Id == args.LastValidPlayer);
+        StateHasChanged();
+    }
+}

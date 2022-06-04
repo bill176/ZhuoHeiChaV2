@@ -55,6 +55,7 @@ namespace ZhuoHeiChaAPI.Controllers
             try
             {
                 var newPlayerId = _gameService.AddPlayerToGame(gameId);
+                player.Id = newPlayerId;
                 _clientNotificationService.RegisterClient(gameId, newPlayerId, player);
 
                 if (newPlayerId == _gameService.GetGameCapacity(gameId) - 1)
