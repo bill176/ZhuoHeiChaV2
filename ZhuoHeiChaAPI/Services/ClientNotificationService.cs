@@ -101,12 +101,20 @@ namespace ZhuoHeiChaAPI.Services
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeGameState, initalGamePackage);
         }
-        public async Task NotifyReturnTribute(int gameId, int receiver, int payer, int returnTributeCount)
+        public async Task NotifyReturnTributeStart(int gameId, int receiver, int payer, int returnTributeCount)
         {
             var clientId = GetClientId(gameId, receiver);
             var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTribute, payer, returnTributeCount);
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTributeStart, payer, returnTributeCount);
         }
+
+        public async Task NotifyReturnTributeSuccessful(int gameId, int receiver, List<int> returnedCardIds)
+        {
+            var clientId = GetClientId(gameId, receiver);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTributeSuccessful, returnedCardIds);
+        }
+
         public async Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage)
         {
             var clientId = GetClientId(gameId, playerId);
@@ -138,7 +146,8 @@ namespace ZhuoHeiChaAPI.Services
         Task SendMessageToClient(int gameId, int playerId, string message);
         Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
         Task NotifyCanStartGame(int gameId, int playerId);
-        Task NotifyReturnTribute(int gameId, int receiver, int payer, int cardsToBeReturned);
+        Task NotifyReturnTributeStart(int gameId, int receiver, int payer, int cardsToBeReturned);
+        Task NotifyReturnTributeSuccessful(int gameId, int receiver, List<int> cardsAfterReturnTribute);
         Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage);
         Task NotifyResubmit(int gameId, int playerId);
         Task NotifyGameEnded(int gameId, bool blackAceWin);

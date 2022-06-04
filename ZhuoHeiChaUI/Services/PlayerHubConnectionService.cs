@@ -17,7 +17,8 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyNewPlayerAddedEventArgs> NotifyNewPlayerAdded;
         public event EventHandler<NotifyPlayCardEventArgs> NotifyPlayCard;
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
-        public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
+        public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTributeStart;
+        public event EventHandler<NotifyReturnTributeSuccessfulEventArgs> NotifyReturnTributeSuccesful;
         public event EventHandler<NotifyResubmitEventArgs> NotifyResubmit;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
         public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
@@ -74,11 +75,17 @@ namespace ZhuoHeiChaUI.Services
                     IsPublicAce = isPublicAce
                 }));
 
-            _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
-                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs
+            _connection.On<int, int>(ClientHubMethods.NotifyReturnTributeStart,
+                (payer, cardsToBeReturnCount) => NotifyReturnTributeStart?.Invoke(this, new NotifyReturnTributeEventArgs
                 {
                     Payer = payer,
                     CardsToBeReturnCount = cardsToBeReturnCount
+                }));
+
+            _connection.On<List<int>>(ClientHubMethods.NotifyReturnTributeSuccessful,
+                (returnedCardIds) => NotifyReturnTributeSuccesful?.Invoke(this, new NotifyReturnTributeSuccessfulEventArgs
+                {
+                    ReturnedCardIds = returnedCardIds
                 }));
 
             _connection.On(ClientHubMethods.NotifyResubmit,

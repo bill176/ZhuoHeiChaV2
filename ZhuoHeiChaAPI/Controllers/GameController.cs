@@ -160,7 +160,7 @@ namespace ZhuoHeiChaAPI.Controllers
                 {
                     var firstPayerTarget = _gameService.GetNextPayerTarget(gameId, playerId);
                     if (firstPayerTarget != null)
-                        _clientNotificationService.NotifyReturnTribute(gameId, playerId, firstPayerTarget.PayerId, firstPayerTarget.ReturnTributeCount);
+                        _clientNotificationService.NotifyReturnTributeStart(gameId, playerId, firstPayerTarget.PayerId, firstPayerTarget.ReturnTributeCount);
 
                 }
 
@@ -185,11 +185,11 @@ namespace ZhuoHeiChaAPI.Controllers
         [HttpPost("{gameId:int}/ReturnTribute")]
         public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString)
         {
-            var card_id = cardsToBeReturnedString.Split(',').Select(Int32.Parse);
+            var returnedCardIds = cardsToBeReturnedString.Split(',').Select(Int32.Parse).ToList();
             try
             {
                 // convert sharedcard(frontend) to Card (backend)
-                var cards = _cardHelper.ConvertIdsToCards(card_id);
+                var cards = _cardHelper.ConvertIdsToCards(returnedCardIds);
 
 
                 var returnTributeReturnValue = _gameService.ReturnTribute(gameId, payer, receiver, cards);
@@ -198,12 +198,13 @@ namespace ZhuoHeiChaAPI.Controllers
 
                 // if returned cards are valid, change flag value and begin returning cards to next payer.
 
+                await _clientNotificationService.NotifyReturnTributeSuccessful(gameId, receiver, returnedCardIds);
 
                 _gameService.SetPayerTargetToValid(gameId, receiver, payer);
                 var nextPayerTarget = _gameService.GetNextPayerTarget(gameId, receiver);
                 if (nextPayerTarget != null)
                 {
-                    await _clientNotificationService.NotifyReturnTribute(gameId, receiver, nextPayerTarget.PayerId, nextPayerTarget.ReturnTributeCount);
+                    await _clientNotificationService.NotifyReturnTributeStart(gameId, receiver, nextPayerTarget.PayerId, nextPayerTarget.ReturnTributeCount);
                     return Ok();
                 }
 
