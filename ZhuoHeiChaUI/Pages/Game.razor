@@ -167,7 +167,7 @@
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
-        
+
 
         DisplayMessage = "This is your cards after pay tribute:" + string.Join(",", cards);
         StateHasChanged();
@@ -195,6 +195,7 @@
             return;
         }
 
+        SelectedCardIds.Clear();
         Console.WriteLine($"you just return cards to {players[payer].Name}!");
         DisplayMessage = $"you just return cards to {players[payer].Name}!";
         StateHasChanged();
@@ -203,8 +204,16 @@
     private async Task ProcessAceGoPublic(bool IsGoPublic)
     {
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={playerId}&isGoPublic={IsGoPublic}", new { });
-        Console.WriteLine("you just Publish the Ace!");
-        DisplayMessage = "you just Publish the Ace!";
+        if (IsGoPublic)
+        {
+            Console.WriteLine("you just Publish the Ace!");
+            DisplayMessage = "you just Publish the Ace!";
+        }
+        else
+        {
+            Console.WriteLine("you chose not to publish the Ace!");
+            DisplayMessage = "you chose not to publish the Ace!";
+        }
         StateHasChanged();
     }
 
@@ -298,7 +307,7 @@
     {
         Console.WriteLine(args.Message);
         DisplayMessage = args.Message;
-            StateHasChanged();
+        StateHasChanged();
     }
 
     private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)

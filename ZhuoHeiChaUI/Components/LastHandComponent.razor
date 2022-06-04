@@ -23,7 +23,7 @@
 
     private void OnPlayCard(object? sender, NotifyPlayCardEventArgs args)
     {
-        _cards = args.LastHand;
+        _cards = args.LastValidHand;
         _player = Players.First(p => p.Id == args.LastValidPlayer);
         StateHasChanged();
     }
