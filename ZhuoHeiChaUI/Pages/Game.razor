@@ -9,33 +9,33 @@
 @using ZhuoHeiChaUI.Components
 
 @*@if (!successJoin)
-{
-    <div>
-        <h3>Enter your name</h3>
-        <button @onclick="AddToGame">Enter</button>
+    {
         <div>
-            <label>Your name</label>
-            <input @bind="@userName" />
+            <h3>Enter your name</h3>
+            <button @onclick="AddToGame">Enter</button>
+            <div>
+                <label>Your name</label>
+                <input @bind="@userName" />
+            </div>
         </div>
-    </div>
-}
-else
-{
-    <p>Wait dealer to start game...</p>
-    <p>Current player(s):</p>
-    <WaitingPlayerList Players="@players" />
-    @if (playerId == "0" && StartGameUIFlag)
-    {
-        <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
     }
-    @if (StartGameUIFlag)
+    else
     {
-        <p>Wait dealer to start game</p>
-    }
+        <p>Wait dealer to start game...</p>
+        <p>Current player(s):</p>
+        <WaitingPlayerList Players="@players" />
+        @if (playerId == "0" && StartGameUIFlag)
+        {
+            <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
+        }
+        @if (StartGameUIFlag)
+        {
+            <p>Wait dealer to start game</p>
+        }
 
-    <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
+        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
 
-}*@
+    }*@
 
 <Notification DisplayMessage="@DisplayMessage"></Notification>
 
@@ -71,8 +71,8 @@ else
         <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand PlayOneMoreRound=@PlayOneMoreRound></ButtonContainer>
         <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
         <label>@string.Join(',', SelectedCardIds)</label>
+        <LastHandComponent Players="@players"></LastHandComponent>
         break;
-
 }
 
 
@@ -167,7 +167,7 @@ else
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
-        
+
 
         DisplayMessage = "This is your cards after pay tribute:" + string.Join(",", cards);
         StateHasChanged();
@@ -195,6 +195,7 @@ else
             return;
         }
 
+        SelectedCardIds.Clear();
         Console.WriteLine($"you just return cards to {players[payer].Name}!");
         DisplayMessage = $"you just return cards to {players[payer].Name}!";
         StateHasChanged();
@@ -203,8 +204,16 @@ else
     private async Task ProcessAceGoPublic(bool IsGoPublic)
     {
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={playerId}&isGoPublic={IsGoPublic}", new { });
-        Console.WriteLine("you just Publish the Ace!");
-        DisplayMessage = "you just Publish the Ace!";
+        if (IsGoPublic)
+        {
+            Console.WriteLine("you just Publish the Ace!");
+            DisplayMessage = "you just Publish the Ace!";
+        }
+        else
+        {
+            Console.WriteLine("you chose not to publish the Ace!");
+            DisplayMessage = "you chose not to publish the Ace!";
+        }
         StateHasChanged();
     }
 
@@ -298,7 +307,7 @@ else
     {
         Console.WriteLine(args.Message);
         DisplayMessage = args.Message;
-            StateHasChanged();
+        StateHasChanged();
     }
 
     private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)

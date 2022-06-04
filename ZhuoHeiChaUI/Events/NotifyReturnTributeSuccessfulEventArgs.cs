@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace ZhuoHeiChaUI.Events
 {
-    public class NotifyReturnTributeSuccessfulEventArgs
+    public class NotifyReturnTributeSuccessfulEventArgs : EventArgs
     {
         public List<int> ReturnedCardIds { get; set; }
     }

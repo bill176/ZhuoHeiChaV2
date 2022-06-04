@@ -1,6 +1,8 @@
-﻿namespace ZhuoHeiChaUI.Events
+﻿using System;
+
+namespace ZhuoHeiChaUI.Events
 {
-    public class DisplayNotificationStateEventArgs
+    public class DisplayNotificationStateEventArgs : EventArgs
     {
         public string DisplayMessage { get; set; }
     }

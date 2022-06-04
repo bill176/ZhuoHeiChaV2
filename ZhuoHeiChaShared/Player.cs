@@ -6,5 +6,6 @@ namespace ZhuoHeiChaShared
     {
         public string ConnectionId { get; set; }
         public string Name { get; set; }
+        public int Id { get; set; } = -1;
     }
 }
