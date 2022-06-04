@@ -11,7 +11,6 @@ namespace ZhuoHeiChaShared
         public static readonly string CanStartGame = nameof(CanStartGame);
         public static readonly string NotifyPlayCard = nameof(NotifyPlayCard);
         public static readonly string AceGoPublic = nameof(AceGoPublic);
-        public static readonly string PlayAnotherRound = nameof(PlayAnotherRound);
         public static readonly string NotifyResubmit = nameof(NotifyResubmit);
         public static readonly string UpdateCards = nameof(UpdateCards);
         public static readonly string UpdateOpponentCardsCount = nameof(UpdateOpponentCardsCount);

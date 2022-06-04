@@ -111,6 +111,7 @@ else
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
+
     }
 
     private async Task AddToGame()
@@ -239,7 +240,8 @@ else
         StateHasChanged();
     }
 
-    private async Task PlayOneMoreRound(bool isPlayOneMoreRound)
+
+    private void PlayOneMoreRound()
     {
         // var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&isPlayOneMoreRound={isPlayOneMoreRound}", new { });
         gameState = GameState.WaitingToStart;

@@ -63,7 +63,7 @@
     public Func<bool, Task> ProcessPlayHand { get; set; }
 
     [Parameter]
-    public Func<bool, Task> PlayOneMoreRound { get; set; }
+    public Action PlayOneMoreRound { get; set; }
 
 
     private ClientState clientState = ClientState.Default;
@@ -109,15 +109,14 @@
 
     private void OnPlayAnotherRoundButtonClicked()
     {
-        // TODO: waiting dealer to start game
-        PlayOneMoreRound(true);
+        PlayOneMoreRound();
         clientState = ClientState.Default;
         StateHasChanged();
     }
 
     private void OnNotPlayAnotherRoundButtonClicked()
     {
-        PlayOneMoreRound(false);
+        PlayOneMoreRound();
         clientState = ClientState.Default;
         StateHasChanged();
     }
@@ -126,7 +125,6 @@
     {
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
-        PlayerHubConnection.NotifyPlayAnotherRound += OnNotifyPlayAnotherRound;
         PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
         PlayerHubConnection.NotifyResubmit += OnNotifyPlayHandSuccess;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
@@ -161,15 +159,9 @@
             clientState = ClientState.Default;
             StateHasChanged(); 
         }
-        
 
     }
 
-    private void OnNotifyPlayAnotherRound(object? sender, NotifyPlayAnotherRoundEventArgs e)
-    {
-        clientState = ClientState.AskingAnotherRound;
-        StateHasChanged();
-    }
 
     private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
     {
@@ -195,8 +187,18 @@
         {
             Console.WriteLine($"Black Ace Loss");
         }
-
-        clientState = ClientState.AskingAnotherRound;
-        StateHasChanged();
+        if (PlayerId != 0)
+        {
+            PlayOneMoreRound();
+            clientState = ClientState.Default;
+            StateHasChanged();
+            return;
+        }
+        else
+        {
+            clientState = ClientState.AskingAnotherRound;
+            StateHasChanged();
+        }
+        
     }
 }
