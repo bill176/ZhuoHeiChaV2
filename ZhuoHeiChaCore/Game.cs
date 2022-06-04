@@ -22,7 +22,7 @@ namespace ZhuoHeiChaCore
         public int CurrentPlayer { get; private set; } = 0;
         public int LastValidPlayer { get; private set; } = 0;
         protected Hand _lastValidHand = HandFactory.EMPTY_HAND;
-        protected bool _didBlackAceWin = false;
+        protected bool _isBlackAceWin = false;
 
         // Key: source player id
         // Value: a dictionary with
@@ -134,7 +134,7 @@ namespace ZhuoHeiChaCore
             CurrentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
             LastValidPlayer = 0;
-            _didBlackAceWin = false;
+            _isBlackAceWin = false;
 
             // save card list after paying tribute
             var cardsPairByPlayerId = new Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)>();
@@ -379,8 +379,11 @@ namespace ZhuoHeiChaCore
 
             LastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
-            if (CheckGameEnded())
-                return new PlayHandReturn(PlayHandReturnType.GameEnded);
+            if (CheckGameEnded()) 
+            {
+                return new PlayHandReturn(PlayHandReturnType.GameEnded, _isBlackAceWin);
+            }
+                
 
             return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, UserCard, CurrentPlayer);     // send back the update cards
         }
@@ -407,7 +410,7 @@ namespace ZhuoHeiChaCore
         {
             if (RemainingPlayers.All(x => _playerTypeList[x] == PlayerType.Normal))
             {
-                _didBlackAceWin = true; // set who wins
+                _isBlackAceWin = true; // determin who wins
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
                 _cardsInHandByPlayerId.Clear();
@@ -415,7 +418,7 @@ namespace ZhuoHeiChaCore
             }
             else if (RemainingPlayers.All(x => _playerTypeList[x] != PlayerType.Normal))
             {
-                _didBlackAceWin = false;
+                _isBlackAceWin = false;
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
                 _cardsInHandByPlayerId.Clear();

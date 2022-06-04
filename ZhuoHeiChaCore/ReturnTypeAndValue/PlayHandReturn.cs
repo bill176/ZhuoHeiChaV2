@@ -10,6 +10,7 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         public int NextPlayerId = -1;
         public string ErrorMessage = "";
         public List<Card> UpdatedCards = null;
+        public bool isBlackAceWin;
 
         public PlayHandReturn(PlayHandReturnType Type)
         {
@@ -19,6 +20,11 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         {
             this.Type = Type;
             this.ErrorMessage = ErrorMessage;
+        }
+        public PlayHandReturn(PlayHandReturnType Type, bool isBlackAceWin)
+        {
+            this.Type = Type;
+            this.isBlackAceWin = isBlackAceWin;
         }
         public PlayHandReturn(PlayHandReturnType Type, List<Card> UpdatedCards, int nextPlayerId)
         {

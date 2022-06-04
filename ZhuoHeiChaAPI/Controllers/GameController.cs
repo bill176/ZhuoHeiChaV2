@@ -314,7 +314,7 @@ namespace ZhuoHeiChaAPI.Controllers
                     case PlayHandReturnType.GameEnded:
                         // tell everyone gameended
                         // TODO: need to know Ace win or not
-                        await _clientNotificationService.NotifyGameEnded(gameId, true);
+                        await _clientNotificationService.NotifyGameEnded(gameId, updatedCardsByPlayer.isBlackAceWin);
                         break;
 
                 }
