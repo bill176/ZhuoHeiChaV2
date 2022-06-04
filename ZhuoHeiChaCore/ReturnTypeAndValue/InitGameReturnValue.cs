@@ -11,7 +11,6 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
 
         public Dictionary<int, IEnumerable<int>> CardsToBeReturnCount { get; set; }
 
-        public IEnumerable<PlayerType> PlayerTypeListThisRound { get; set; }
         public bool IsFirstRound { get; set; }
     }
 }

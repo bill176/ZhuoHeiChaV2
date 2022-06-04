@@ -140,7 +140,6 @@ namespace ZhuoHeiChaCore
                 CardsPairsByPlayerId = cardsPairByPlayerId,
                 ReturnTributeListByPlayerId = returnTributeListByPlayerId,
                 CardsToBeReturnCount = cardsToBeReturnCount,
-                PlayerTypeListThisRound = _playerTypeList,
                 IsFirstRound = isFirstRound
                 
             };

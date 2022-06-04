@@ -102,8 +102,7 @@ namespace ZhuoHeiChaUI.Services
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
                     CardAfter = initalGamePackage.CardAfter,
-                    CardBefore = initalGamePackage.CardBefore,
-                    PlayerTypeListThisRound = initalGamePackage.PlayerTypeListThisRound
+                    CardBefore = initalGamePackage.CardBefore
 
                 }));
 

@@ -8,7 +8,6 @@ namespace ZhuoHeiChaShared
     {
         public List<int> CardBefore { get; set; }
         public List<int> CardAfter { get; set; }
-        public List<int> PlayerTypeListThisRound { get; set; }
 
     }
 }

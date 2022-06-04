@@ -131,14 +131,13 @@ namespace ZhuoHeiChaAPI.Controllers
                 var cardsPairsByPlayerId = initGameReturn.CardsPairsByPlayerId;
                 var returnTributeListByPlayerId = initGameReturn.ReturnTributeListByPlayerId;
                 var cardsToBeReturnCount = initGameReturn.CardsToBeReturnCount;
-                var playerTypeListThisRound = initGameReturn.PlayerTypeListThisRound.Select(p => ((int)p)).ToList();
 
                 // send initial data
                 foreach (var playerId in cardsPairsByPlayerId.Keys)
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item2).ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore = cardBefore, CardAfter = cardAfter, PlayerTypeListThisRound = playerTypeListThisRound };
+                    var initalGamePackage = new InitalGamePackage { CardBefore = cardBefore, CardAfter = cardAfter};
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
