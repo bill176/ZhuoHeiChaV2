@@ -175,11 +175,11 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"Failed return cards to {payer}!");
+            Console.WriteLine($"Failed return cards to {players[payer].Name}!");
             return;
         }
 
-        Console.WriteLine($"you just return cards to {payer}!");
+        Console.WriteLine($"you just return cards to {players[payer].Name}!");
     }
 
     private async Task ProcessAceGoPublic(bool IsGoPublic)
@@ -218,7 +218,7 @@ else
         }
         else
         {
-            Console.WriteLine($"Waiting for {currentPlayerId} to Play hand!");
+            Console.WriteLine($"Waiting for {players[currentPlayerId].Name} to Play hand!");
         }
         if (playerId == args.LastValidPlayer)
         {
@@ -228,7 +228,7 @@ else
         }
         SelectedCardIds = new List<int>();
         StateHasChanged();
-        Console.WriteLine($"Last valid Player is {args.LastValidPlayer}!");
+        Console.WriteLine($"Last valid Player is {players[args.LastValidPlayer].Name}!");
         var lastHand = string.Join(",", args.LastHand);
         Console.WriteLine($"Last Hand is {lastHand}!");
     }
