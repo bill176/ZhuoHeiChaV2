@@ -67,7 +67,7 @@ else
 
     case GameState.DisplayingCard:
         <ButtonContainer PlayerId="@playerId" ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute ProcessPlayHand=@ProcessPlayHand PlayOneMoreRound=@PlayOneMoreRound></ButtonContainer>
-        <PlayingCards CardIds="@cards" IsInteractive="@CanPlayHand" @bind-SelectedCardIds="@SelectedCardIds" />
+        <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
         <label>@string.Join(',', SelectedCardIds)</label>
         break;
 
@@ -111,7 +111,7 @@ else
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
-
+        PlayerHubConnection.NotifyReturnTributeSuccesful += OnNotifyReturnTributeSuccessful;
     }
 
     private async Task AddToGame()
@@ -119,10 +119,10 @@ else
 
         var connectionId = await PlayerHubConnection.EstablishConnection();
         var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
-            {
-                ConnectionId = connectionId,
-                Name = userName
-            });
+        {
+            ConnectionId = connectionId,
+            Name = userName
+        });
         if (!response.IsSuccessStatusCode) return;
 
         var IdString = await response.Content.ReadAsStringAsync();
@@ -168,9 +168,9 @@ else
     }
 
 
-    private async Task ProcessReturnTribute(List<int> cardsToBeReturned, int payer)
+    private async Task ProcessReturnTribute(int payer)
     {
-        string cardsToBeReturnedString = string.Join(",", cardsToBeReturned);
+        string cardsToBeReturnedString = string.Join(",", SelectedCardIds);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?receiver={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
 
         if (!response.IsSuccessStatusCode)
@@ -270,6 +270,12 @@ else
     private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
     {
         players = args.UpdatedPlayers;
+        StateHasChanged();
+    }
+
+    private void OnNotifyReturnTributeSuccessful(object? sender, NotifyReturnTributeSuccessfulEventArgs args)
+    {
+        args.ReturnedCardIds.ForEach(cardId => cards.Remove(cardId));
         StateHasChanged();
     }
     #endregion

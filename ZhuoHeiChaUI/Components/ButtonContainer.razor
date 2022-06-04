@@ -15,11 +15,10 @@
             </button>
             break;
         case ClientState.ReturningTribute:
-
-
-            <ReturnTributeComponent ProcessReturnTribute=@ProcessReturnTribute payer="@payer" cardsCountReturnToPayer="@cardsCountReturnToPayer"></ReturnTributeComponent>
-
-
+            <span>正在还牌给玩家 @payer ...牌数: @cardsCountReturnToPayer </span>
+            <button type="button" class="button" name="returnTribute" @onclick="OnReturnTributeClicked">
+                确认还牌
+            </button>
             break;
         case ClientState.AceGoingPublic:
             <button type="button" class="button" name="aceGoPublic" @onclick="OnAceGoPublicButtonClicked">
@@ -56,8 +55,9 @@
 
     [Parameter]
     public Func<bool, Task> ProcessAceGoPublic { get; set; }
+
     [Parameter]
-    public Func<List<int>, int, Task> ProcessReturnTribute { get; set; }
+    public Func<int, Task> ProcessReturnTribute { get; set; }
 
     [Parameter]
     public Func<bool, Task> ProcessPlayHand { get; set; }
@@ -91,7 +91,12 @@
         StateHasChanged();
     }
 
-
+    private void OnReturnTributeClicked()
+    {
+        ProcessReturnTribute(payer);
+        clientState = ClientState.Default;
+        StateHasChanged();
+    }
 
     private void OnAceGoPublicButtonClicked()
     {
@@ -125,7 +130,7 @@
     {
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyAceGoPublic += OnNotifyAceGoPublic;
-        PlayerHubConnection.NotifyReturnTribute += OnNotifyReturnTribute;
+        PlayerHubConnection.NotifyReturnTributeStart += OnNotifyReturnTributeStart;
         PlayerHubConnection.NotifyResubmit += OnNotifyPlayHandSuccess;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
         PlayerHubConnection.NotifyGameEnded += OnNotifyGameEnded;
@@ -157,13 +162,12 @@
         else
         {
             clientState = ClientState.Default;
-            StateHasChanged(); 
+            StateHasChanged();
         }
-
     }
 
 
-    private void OnNotifyReturnTribute(object? sender, NotifyReturnTributeEventArgs args)
+    private void OnNotifyReturnTributeStart(object? sender, NotifyReturnTributeEventArgs args)
     {
         payer = args.Payer;
         cardsCountReturnToPayer = args.CardsToBeReturnCount;
