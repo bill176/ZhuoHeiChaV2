@@ -66,7 +66,7 @@ namespace ZhuoHeiChaUI.Services
                 {
                     CurrentPlayerId = playHandPackage.CurrentPlayer,
                     LastValidPlayer = playHandPackage.LastValidPlayer,
-                    LastHand = playHandPackage.LastHand
+                    LastValidHand = playHandPackage.LastValidHand
                 }));
 
             _connection.On<bool>(ClientHubMethods.AceGoPublic,

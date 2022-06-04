@@ -1,11 +1,12 @@
 using ZhuoHeiChaCore;
+using System.Collections.Generic;
 
 public class BombCardValue : Hand
 {
     private int _value;
     private int _length;
 
-    public BombCardValue(int value, int length, float group) : base(null, group)
+    public BombCardValue(int value, int length, float group, List<Card> cards) : base(cards, group)
     {
         _value = value;
         _length = length;

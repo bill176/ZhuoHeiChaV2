@@ -352,7 +352,8 @@ namespace ZhuoHeiChaCore
                 }
                 CurrentPlayer = possible_next_player;
 
-                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, new List<Card>(), CurrentPlayer);
+                var a = _lastValidHand.ListOfCards;
+                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, a, CurrentPlayer);
             }
 
             if (LastValidPlayer == playerId)

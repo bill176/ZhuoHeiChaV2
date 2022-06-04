@@ -37,6 +37,8 @@ else
 
 }*@
 
+<Notification DisplayMessage="@DisplayMessage"></Notification>
+
 @switch (gameState)
 {
     case GameState.Default:
@@ -100,6 +102,8 @@ else
 
     private List<int> SelectedCardIds = new List<int>();
 
+    public string DisplayMessage;
+
     private HubConnection _hubConnection;
 
     protected override async Task OnInitializedAsync()
@@ -127,7 +131,10 @@ else
 
         var IdString = await response.Content.ReadAsStringAsync();
         playerId = Int32.Parse(IdString);
+
         Console.WriteLine($"Player # {playerId} added, name: {userName}. Connection id: {connectionId}");
+        DisplayMessage = $"Player # {playerId} added, name: {userName}. Connection id: {connectionId}";
+
         gameState = GameState.WaitingToStart;
         StateHasChanged();
     }
@@ -138,23 +145,31 @@ else
         if (!response.IsSuccessStatusCode)
         {
             Console.WriteLine("Unable to init game!");
+            DisplayMessage = "Unable to init game!";
+            StateHasChanged();
             return;
         }
         Console.WriteLine("Game successfully started!");
+        DisplayMessage ="Game successfully started!";
+        StateHasChanged();
 
     }
 
     private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
     {
+        gameState = GameState.DisplayingCard;
         cards = args.CardBefore;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your original cards");
+
         cards = args.CardAfter;
         Console.WriteLine(string.Join(",", cards));
         // show cards
         Console.WriteLine("This is your cards after pay tribute");
-        gameState = GameState.DisplayingCard;
+        
+
+        DisplayMessage = "This is your cards after pay tribute:" + string.Join(",", cards);
         StateHasChanged();
     }
 
@@ -163,7 +178,6 @@ else
     {
         cards = args.UpdatedCard;
         StateHasChanged();
-        Console.WriteLine(string.Join(",", cards));
 
     }
 
@@ -176,16 +190,22 @@ else
         if (!response.IsSuccessStatusCode)
         {
             Console.WriteLine($"Failed return cards to {players[payer].Name}!");
+            DisplayMessage = $"Failed return cards to {players[payer].Name}!";
+            StateHasChanged();
             return;
         }
 
         Console.WriteLine($"you just return cards to {players[payer].Name}!");
+        DisplayMessage = $"you just return cards to {players[payer].Name}!";
+        StateHasChanged();
     }
 
     private async Task ProcessAceGoPublic(bool IsGoPublic)
     {
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/acegopublic?playerId={playerId}&isGoPublic={IsGoPublic}", new { });
         Console.WriteLine("you just Publish the Ace!");
+        DisplayMessage = "you just Publish the Ace!";
+        StateHasChanged();
     }
 
     private async Task ProcessPlayHand(bool isSkip)
@@ -196,6 +216,7 @@ else
         {
             await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay=", new { });
             Console.WriteLine("Finish Skipping!");
+            DisplayMessage = "Finish Skipping!";
             SelectedCardIds = new List<int>();
             StateHasChanged();
             return;
@@ -204,6 +225,7 @@ else
         string cardsTobePlay = string.Join(",", SelectedCardIds);
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/PlayHand?playerId={playerId}&cardsTobePlay={cardsTobePlay}", new { });
         Console.WriteLine("Finish playing hand!");
+        DisplayMessage = "Finish playing hand!";
         SelectedCardIds = new List<int>();
         StateHasChanged();
     }
@@ -215,27 +237,35 @@ else
         {
             CanPlayHand = true;
             Console.WriteLine("Please select your hand!");
+            DisplayMessage = "Please select your hand!";
+            StateHasChanged();
         }
         else
         {
             Console.WriteLine($"Waiting for {players[currentPlayerId].Name} to Play hand!");
+            DisplayMessage = $"Waiting for {players[currentPlayerId].Name} to Play hand!";
         }
         if (playerId == args.LastValidPlayer)
         {
-            foreach (int card in args.LastHand)
+            foreach (int card in args.LastValidHand)
                 if (cards.Contains(card))
                     cards.Remove(card);
         }
         SelectedCardIds = new List<int>();
         StateHasChanged();
         Console.WriteLine($"Last valid Player is {players[args.LastValidPlayer].Name}!");
-        var lastHand = string.Join(",", args.LastHand);
-        Console.WriteLine($"Last Hand is {lastHand}!");
+
+        var lastValidHand = string.Join(",", args.LastValidHand);
+        Console.WriteLine($"Last valid Hand is {lastValidHand}!");
+
+        DisplayMessage = $"Last valid Player is {players[args.LastValidPlayer].Name}!" + $"Last Valid Hand is {lastValidHand}!";
+        StateHasChanged();
     }
 
     private void OnNotifyResubmit(object? sender, NotifyResubmitEventArgs args)
     {
         Console.WriteLine($"Failed playing hand! Reselect your card");
+        DisplayMessage = $"Failed playing hand! Reselect your card";
         CanPlayHand = true;
         StateHasChanged();
     }
@@ -255,6 +285,8 @@ else
         if (playerId != 0)
         {
             Console.WriteLine("Non-host player should not receive this notification!");
+            DisplayMessage = "Non-host player should not receive this notification!";
+            StateHasChanged();
             return;
         }
 
@@ -265,6 +297,8 @@ else
     private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
     {
         Console.WriteLine(args.Message);
+        DisplayMessage = args.Message;
+            StateHasChanged();
     }
 
     private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
