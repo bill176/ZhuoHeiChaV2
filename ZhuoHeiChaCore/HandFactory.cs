@@ -35,30 +35,30 @@ namespace ZhuoHeiChaCore
                 }
 
                 if (isStraightFlush)
-                    return new FlushCardValue(flushLastValue + 13, cards.Count, 1);
+                    return new FlushCardValue(flushLastValue + 13, cards.Count, 1, cards);
                 else
-                    return new FlushCardValue(flushLastValue, cards.Count, 1);
+                    return new FlushCardValue(flushLastValue, cards.Count, 1, cards);
             }
 
             // check for pair
             var pairLastValue = HandHelper.IsPair(cards);
             if (pairLastValue > 0)
             {
-                return new PairCardValue(pairLastValue, cards.Count / 2, 1);
+                return new PairCardValue(pairLastValue, cards.Count / 2, 1, cards);
             }
 
             // check for bomb
             var bombValue = HandHelper.IsBomb(cards);
             if (bombValue > 0)
             {
-                return new BombCardValue(bombValue, cards.Count, cards.Count);
+                return new BombCardValue(bombValue, cards.Count, cards.Count, cards);
             }
 
             var catValue = HandHelper.IsCat(cards);
             if (catValue > 0)
             {
                 // TODO
-                return new CatsCardValue(catValue, catValue);
+                return new CatsCardValue(catValue, catValue, cards);
             }
 
             throw new Exception("Not a valid hand");

@@ -1,11 +1,12 @@
 using ZhuoHeiChaCore;
+using System.Collections.Generic;
 
 public class PairCardValue : Hand
 {
     private int _pairNumber;
     private int _lastNumber;
 
-    public PairCardValue(int number, int pairNumber, float group) : base(null, group)
+    public PairCardValue(int number, int pairNumber, float group, List<Card> cards) : base(cards, group)
     {
         _lastNumber = number;
         _pairNumber = pairNumber;

@@ -1,0 +1,17 @@
+﻿@using ZhuoHeiChaUI.Events
+
+<div>
+    <label> Notifications: </label>
+    <p>@DisplayMessage</p>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public string DisplayMessage { get; set; }
+
+    [Parameter]
+    public EventCallback<string> DisplayMessageChanged { get; set; }
+
+}

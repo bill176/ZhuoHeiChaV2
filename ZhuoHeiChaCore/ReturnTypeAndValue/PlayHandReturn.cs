@@ -9,7 +9,7 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         public PlayHandReturnType Type;
         public int NextPlayerId = -1;
         public string ErrorMessage = "";
-        public List<Card> UpdatedCards = null;
+        public List<Card> LastValidHand = null;
         public bool isBlackAceWin;
 
         public PlayHandReturn(PlayHandReturnType Type)
@@ -29,7 +29,7 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         public PlayHandReturn(PlayHandReturnType Type, List<Card> UpdatedCards, int nextPlayerId)
         {
             this.Type = Type;
-            this.UpdatedCards = UpdatedCards;
+            this.LastValidHand = UpdatedCards;
             this.NextPlayerId = nextPlayerId;
         }
     }

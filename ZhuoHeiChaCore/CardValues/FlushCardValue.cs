@@ -1,11 +1,12 @@
 using ZhuoHeiChaCore;
+using System.Collections.Generic;
 
 public class FlushCardValue : Hand
 {
     private int _lastNumber;
     private int _flushSize;
 
-    public FlushCardValue(int lastNumber, int flushSize, float group) : base(null, group)
+    public FlushCardValue(int lastNumber, int flushSize, float group, List<Card> cards) : base(cards, group)
     {
         _lastNumber = lastNumber;
         _flushSize = flushSize;

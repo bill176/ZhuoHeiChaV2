@@ -265,7 +265,7 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void NotifyPlayHand(int gameId, List<int> lastHand)
+        private void NotifyPlayHand(int gameId, List<int> lastValidHand)
         {
             // get current player id
             var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
@@ -276,7 +276,7 @@ namespace ZhuoHeiChaAPI.Controllers
             {
                 CurrentPlayer = currentPlayerId,
                 LastValidPlayer = lastValidPlayer,
-                LastHand = lastHand
+                LastValidHand = lastValidHand
             };
             // notify each remaining players, and twll thwm who is the cureent player
             foreach (var playerId in remainingPlayerList)
@@ -308,8 +308,8 @@ namespace ZhuoHeiChaAPI.Controllers
                     case PlayHandReturnType.PlayHandSuccess:
                         // tell frontend: current player, last valid player, last valid hand
                         // tell frontend change player:{playerId} UI(hide playhand botton), change player:{current player} UI(show playhand button)
-                        var lastHand = _cardHelper.ConvertCardsToIds(updatedCardsByPlayer.UpdatedCards).ToList();
-                        NotifyPlayHand(gameId, lastHand);
+                        var lastValidHand = _cardHelper.ConvertCardsToIds(updatedCardsByPlayer.LastValidHand).ToList();
+                        NotifyPlayHand(gameId, lastValidHand);
                         break;
 
                     case PlayHandReturnType.GameEnded:

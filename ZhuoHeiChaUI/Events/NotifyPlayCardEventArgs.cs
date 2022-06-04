@@ -9,6 +9,6 @@ namespace ZhuoHeiChaUI.Events
     {
         public int CurrentPlayerId { get; set; }
         public int LastValidPlayer { get; set; }
-        public List<int> LastHand { get; set; }
+        public List<int> LastValidHand { get; set; }
     }
 }
