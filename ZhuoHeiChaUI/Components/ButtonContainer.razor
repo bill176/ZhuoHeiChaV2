@@ -156,6 +156,12 @@
             clientState = ClientState.AceGoingPublic;
             StateHasChanged();
         }
+        else
+        {
+            clientState = ClientState.Default;
+            StateHasChanged(); 
+        }
+        
 
     }
 

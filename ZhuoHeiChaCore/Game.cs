@@ -84,20 +84,22 @@ namespace ZhuoHeiChaCore
                     .GroupBy(x => x.i % Capacity)
                     .Select(g => g.Select(x => x.s).ToList())
                     .ToList();
-            //for (int i = 0; i < numOfPlayers; i++)
-            //{
-            //    _cardsInHandByPlayerId.Add(i, deckForUser[i]);
-            //    _cardsInHandByPlayerId[i].Sort(Card.ReverseComparator);
-            //}
+            for (int i = 0; i < Capacity; i++)
+            {
+                _cardsInHandByPlayerId.Add(i, deckForUser[i]);
+                _cardsInHandByPlayerId[i].Sort(Card.ReverseComparator);
+            }
 
-            //for test
-            var firstCards = _cardHelper.ConvertIdsToCards(new List<int> { 2, 1, 0 }).ToList();
-            var secondCards = _cardHelper.ConvertIdsToCards(new List<int> { 5, 4, 3 }).ToList();
-            var thirdCards = _cardHelper.ConvertIdsToCards(new List<int> { 12, 11, 10, 9, 8, 7 }).ToList();
-            _cardsInHandByPlayerId[0] = firstCards;
-            _cardsInHandByPlayerId[1] = secondCards;
-            _cardsInHandByPlayerId[2] = thirdCards;
-            //////////
+            ////for test
+            //var firstCards = _cardHelper.ConvertIdsToCards(new List<int> { 2, 1, 0 }).ToList();
+            //var secondCards = _cardHelper.ConvertIdsToCards(new List<int> { 5, 4, 3 }).ToList();
+            //var thirdCards = _cardHelper.ConvertIdsToCards(new List<int> { 12, 11, 10, 9, 8, 7 }).ToList();
+            //var fourthCards = _cardHelper.ConvertIdsToCards(new List<int> { 21, 20, 19}).ToList();
+            //_cardsInHandByPlayerId[0] = firstCards;
+            //_cardsInHandByPlayerId[1] = secondCards;
+            //_cardsInHandByPlayerId[2] = thirdCards;
+            //_cardsInHandByPlayerId[3] = fourthCards;
+            ////////////
 
 
             // return cards for player before paying tribute
@@ -406,14 +408,15 @@ namespace ZhuoHeiChaCore
         {
             if (RemainingPlayers.All(x => _playerTypeList[x] == PlayerType.Normal))
             {
-                _didBlackAceWin = false; // set who wins
+                _didBlackAceWin = true; // set who wins
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
+                _cardsInHandByPlayerId.Clear();
                 return true;
             }
             else if (RemainingPlayers.All(x => _playerTypeList[x] != PlayerType.Normal))
             {
-                _didBlackAceWin = true;
+                _didBlackAceWin = false;
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
                 _cardsInHandByPlayerId.Clear();
