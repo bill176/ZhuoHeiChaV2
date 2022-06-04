@@ -19,10 +19,11 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyAceGoPublicEventArgs> NotifyAceGoPublic;
         public event EventHandler<NotifyPlayAnotherRoundEventArgs> NotifyPlayAnotherRound;
         public event EventHandler<NotifyReturnTributeEventArgs> NotifyReturnTribute;
-        public event EventHandler<NotifyPlayHandSuccessEventArgs> NotifyPlayHandSuccess;
+        public event EventHandler<NotifyResubmitEventArgs> NotifyResubmit;
         public event EventHandler<NotifyOpponentCardsUpdatedEventArgs> NotifyOpponentCardsUpdated;
         public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
+        public event EventHandler<NotifyGameEndedEventArgs> NotifyGameEnded;
 
         /// <summary>
         /// Sets up and starts the connection to playerhub
@@ -60,10 +61,12 @@ namespace ZhuoHeiChaUI.Services
             _connection.On<string>(ClientHubMethods.ReceiveMessage,
                 (message) => ReceiveMessage?.Invoke(this, new ReceiveMessageEventArgs { Message = message }));
 
-            _connection.On<int>(ClientHubMethods.NotifyPlayCard,
-                (currentPlayerId) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs 
+            _connection.On<PlayHandPackage>(ClientHubMethods.NotifyPlayCard,
+                (playHandPackage) => NotifyPlayCard?.Invoke(this, new NotifyPlayCardEventArgs
                 {
-                    CurrentPlayerId = currentPlayerId
+                    CurrentPlayerId = playHandPackage.CurrentPlayer,
+                    LastValidPlayer = playHandPackage.LastValidPlayer,
+                    LastHand = playHandPackage.LastHand
                 }));
 
             _connection.On<bool>(ClientHubMethods.AceGoPublic,
@@ -76,14 +79,14 @@ namespace ZhuoHeiChaUI.Services
                 () => NotifyPlayAnotherRound?.Invoke(this, new NotifyPlayAnotherRoundEventArgs()));
 
             _connection.On<int, int>(ClientHubMethods.NotifyReturnTribute,
-                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs 
-                { 
+                (payer, cardsToBeReturnCount) => NotifyReturnTribute?.Invoke(this, new NotifyReturnTributeEventArgs
+                {
                     Payer = payer,
                     CardsToBeReturnCount = cardsToBeReturnCount
                 }));
 
-            _connection.On(ClientHubMethods.PlayHandSuccess,
-                () => NotifyPlayHandSuccess?.Invoke(this, new NotifyPlayHandSuccessEventArgs()));
+            _connection.On(ClientHubMethods.NotifyResubmit,
+                () => NotifyResubmit?.Invoke(this, new NotifyResubmitEventArgs()));
 
             _connection.On(ClientHubMethods.UpdateOpponentCardsCount,
                 () => NotifyOpponentCardsUpdated?.Invoke(this, new NotifyOpponentCardsUpdatedEventArgs()));
@@ -92,7 +95,7 @@ namespace ZhuoHeiChaUI.Services
                 () => NotifyCanStartGame?.Invoke(this, null));
 
             _connection.On<List<int>>(ClientHubMethods.UpdateCards,
-                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs 
+                (cards) => NotifyCardsUpdated?.Invoke(this, new NotifyCardsUpdatedEventArgs
                 {
                     UpdatedCard = cards
                 }));
@@ -109,6 +112,9 @@ namespace ZhuoHeiChaUI.Services
 
             _connection.On<List<Player>>(ClientHubMethods.NewPlayerAdded,
                 (players) => NotifyNewPlayerAdded?.Invoke(this, new NotifyNewPlayerAddedEventArgs { UpdatedPlayers = players }));
+
+            _connection.On<bool>(ClientHubMethods.NotifyGameEnded,
+                (isBlackAceWin) => NotifyGameEnded?.Invoke(this, new NotifyGameEndedEventArgs { IsBlackAceWin = isBlackAceWin }));
         }
     }
 }

@@ -19,8 +19,8 @@ namespace ZhuoHeiChaCore
 
         protected readonly List<int> _finishOrder = new List<int>();
 
-        public int CurrentPlayer { get; private set; }= 0;
-        protected int _lastValidPlayer = 0;
+        public int CurrentPlayer { get; private set; } = 0;
+        public int LastValidPlayer { get; private set; } = 0;
         protected Hand _lastValidHand = HandFactory.EMPTY_HAND;
         protected bool _didBlackAceWin = false;
 
@@ -33,9 +33,9 @@ namespace ZhuoHeiChaCore
         // ((payer, receiver), list of cards)
         protected readonly List<((int, int), List<Card>)> _returnTributeCardsBuffer = new List<((int, int), List<Card>)>();
 
-        protected  ICardFactory _cardFactory;
-        protected  ICardHelper _cardHelper;
-        protected  IGameHelper _gameHelper;
+        protected ICardFactory _cardFactory;
+        protected ICardHelper _cardHelper;
+        protected IGameHelper _gameHelper;
 
         public Game(ICardFactory cardFactory, ICardHelper cardHelper, IGameHelper gameHelper, int capacity)
         {
@@ -67,24 +67,46 @@ namespace ZhuoHeiChaCore
         // distribute cards, check tribute list, notify frontend, pay tribute
         public InitGameReturnValue InitGame(int numOfDecks = 1)
         {
+            if (RemainingPlayers.Count == 0)
+            {
+                for (int playerId = 0; playerId < Capacity; playerId++)
+                {
+                    RemainingPlayers.Add(playerId);
+                }
+            }
+
+
             // distribute cards
-            int numOfPlayers = RemainingPlayers.Count();
 
             var cards = _cardFactory.GetFullDeckShuffled(numOfDecks);
 
             var deckForUser = cards.Select((s, i) => new { s, i })
-                    .GroupBy(x => x.i % numOfPlayers)
+                    .GroupBy(x => x.i % Capacity)
                     .Select(g => g.Select(x => x.s).ToList())
                     .ToList();
-            for (int i = 0; i < numOfPlayers; i++)
+            for (int i = 0; i < Capacity; i++)
             {
                 _cardsInHandByPlayerId.Add(i, deckForUser[i]);
                 _cardsInHandByPlayerId[i].Sort(Card.ReverseComparator);
             }
 
+            ////for test
+            //var firstCards = _cardHelper.ConvertIdsToCards(new List<int> { 2, 1, 0 }).ToList();
+            //var secondCards = _cardHelper.ConvertIdsToCards(new List<int> { 5, 4, 3 }).ToList();
+            //var thirdCards = _cardHelper.ConvertIdsToCards(new List<int> { 12, 11, 10, 9, 8, 7 }).ToList();
+            //var fourthCards = _cardHelper.ConvertIdsToCards(new List<int> { 21, 20, 19}).ToList();
+            //_cardsInHandByPlayerId[0] = firstCards;
+            //_cardsInHandByPlayerId[1] = secondCards;
+            //_cardsInHandByPlayerId[2] = thirdCards;
+            //_cardsInHandByPlayerId[3] = fourthCards;
+            ////////////
+
+
             // return cards for player before paying tribute
             var cardsBeforeTributeByPlayerId = new Dictionary<int, IEnumerable<Card>>();
-            foreach (var playerId in RemainingPlayers)
+
+
+            for (int playerId = 0; playerId < Capacity; playerId++)
             {
                 var cardsBeforeTribute = _cardsInHandByPlayerId[playerId].ToList();
                 cardsBeforeTribute.Sort(Card.Comparator);
@@ -111,12 +133,12 @@ namespace ZhuoHeiChaCore
 
             CurrentPlayer = 0;
             _lastValidHand = HandFactory.EMPTY_HAND;
-            _lastValidPlayer = 0;
+            LastValidPlayer = 0;
             _didBlackAceWin = false;
 
             // save card list after paying tribute
             var cardsPairByPlayerId = new Dictionary<int, (IEnumerable<Card>, IEnumerable<Card>)>();
-            foreach (var playerId in RemainingPlayers)
+            for (int playerId = 0; playerId < Capacity; playerId++)
             {
                 // go back to the default ascending order; this is the list of cards after tribute
                 var cardsAfterTribute = _cardsInHandByPlayerId[playerId].ToList();
@@ -125,14 +147,14 @@ namespace ZhuoHeiChaCore
             }
 
 
-            var returnTributeListByPlayerId = new Dictionary<int, IEnumerable<int>>();
-            var cardsToBeReturnCount = new Dictionary<int, IEnumerable<int>>();
+            var returnTributeListByPlayerId = new Dictionary<int, List<int>>();
+            var cardsToBeReturnCount = new Dictionary<int, List<int>>();
 
-            foreach (var playerId in RemainingPlayers)
+            for (int playerId = 0; playerId < Capacity; playerId++)
             {
-                returnTributeListByPlayerId[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => p.Item1);
-                cardsToBeReturnCount[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => GetNumOfTributeCards(p.Item1, p.Item2));
-                
+                returnTributeListByPlayerId[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => p.Item1).ToList();
+                cardsToBeReturnCount[playerId] = _tributePairs.Where(p => p.Item2 == playerId).Select(p => GetNumOfTributeCards(p.Item1, p.Item2)).ToList();
+
             }
 
             return new InitGameReturnValue
@@ -142,20 +164,20 @@ namespace ZhuoHeiChaCore
                 CardsToBeReturnCount = cardsToBeReturnCount,
                 PlayerTypeListThisRound = _playerTypeList,
                 IsFirstRound = isFirstRound
-                
+
             };
         }
 
         protected IEnumerable<(int, int)> GetTributePairs()
         {
             // return empty list at first round.
-            if(_finishOrder.Count == 0)
+            if (_finishOrder.Count == 0)
                 return Enumerable.Empty<(int, int)>();
             if (_finishOrder.Any(x => _gameHelper.HasFourTwo(_cardsInHandByPlayerId[x]))
                 && !_gameHelper.HasFourTwo(_cardsInHandByPlayerId[_finishOrder[0]]))
                 return Enumerable.Empty<(int, int)>();
 
-            var finishGroupsSequence = _gameHelper.GroupConsecutivePlayersOfSameType(_finishOrder, idx => _playerTypeList[idx]);
+            var finishGroupsSequence = _gameHelper.GroupConsecutivePlayersOfSameType(_finishOrder, _playerTypeList);
             var payerReceiverPairs = _gameHelper.GeneratePayerReceiverPairsForConsecutiveGroups(finishGroupsSequence);
 
             return payerReceiverPairs.Where(pair => !_gameHelper.HasTwoCats(_cardsInHandByPlayerId[pair.payer]));
@@ -184,7 +206,7 @@ namespace ZhuoHeiChaCore
 
         private void PayTribute(int payer, int receiver)
         {
-            var tribute = _cardsInHandByPlayerId[payer].First(x  =>  x.CardType != CardType.SPADE_ACE);
+            var tribute = _cardsInHandByPlayerId[payer].First(x => x.CardType != CardType.SPADE_ACE);
 
             _cardsInHandByPlayerId[payer].Remove(tribute);
             _cardsInHandByPlayerId[receiver].Add(tribute);
@@ -267,18 +289,18 @@ namespace ZhuoHeiChaCore
             var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
 
             // TODO: only sort players with added cards
-            foreach (var player in RemainingPlayers)
+            for (int playerId = 0; playerId < Capacity; playerId++)
             {
-                _cardsInHandByPlayerId[player].Sort(Card.Comparator);
-                playerCardsDictionary[player] = _cardsInHandByPlayerId[player];
+                _cardsInHandByPlayerId[playerId].Sort(Card.Comparator);
+                playerCardsDictionary[playerId] = _cardsInHandByPlayerId[playerId];
             }
 
             return playerCardsDictionary;
         }
 
-        public IEnumerable<bool> IsBlackAceList() 
+        public IEnumerable<bool> IsBlackAceList()
         {
-            return _playerTypeList.Select(t => t==PlayerType.Ace || t == PlayerType.PublicAce);
+            return _playerTypeList.Select(t => t == PlayerType.Ace || t == PlayerType.PublicAce);
         }
 
         public void AceGoPublic(int goPublicPlayerId)
@@ -291,7 +313,7 @@ namespace ZhuoHeiChaCore
 
             _playerTypeList[goPublicPlayerId] = PlayerType.PublicAce;
             CurrentPlayer = goPublicPlayerId;
-            _lastValidPlayer = goPublicPlayerId;
+            LastValidPlayer = goPublicPlayerId;
         }
 
         /// <summary>
@@ -303,13 +325,13 @@ namespace ZhuoHeiChaCore
         {
             int possible_next_player = (CurrentPlayer + 1) % _cardsInHandByPlayerId.Count;
 
-            if(CurrentPlayer != playerId)
+            if (CurrentPlayer != playerId)
             {
                 throw new ArgumentException($"Player {playerId} cannot play hand now, because he/she is not the current player!");
             }
 
-            foreach(Card c in UserCard)
-                if(!_cardsInHandByPlayerId[playerId].Contains(c))
+            foreach (Card c in UserCard)
+                if (!_cardsInHandByPlayerId[playerId].Contains(c))
                     throw new ArgumentException($"Player {playerId} does not have these cards!");
 
             Hand userHand = HandFactory.EMPTY_HAND;
@@ -322,7 +344,7 @@ namespace ZhuoHeiChaCore
                 return new PlayHandReturn(PlayHandReturnType.Resubmit, " Hand is not valid ");
             }
 
-            if (userHand.Group == HandFactory.EMPTY_HAND.Group && _lastValidPlayer != playerId)    // currentPlayer cannot skip
+            if (userHand.Group == HandFactory.EMPTY_HAND.Group && LastValidPlayer != playerId)    // currentPlayer cannot skip
             {
                 // change current player to the next one.
                 while (!RemainingPlayers.Contains(possible_next_player))
@@ -331,14 +353,14 @@ namespace ZhuoHeiChaCore
                 }
                 CurrentPlayer = possible_next_player;
 
-                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess);
+                return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, new List<Card>(), CurrentPlayer);
             }
 
-            if (_lastValidPlayer == playerId)
+            if (LastValidPlayer == playerId)
                 if (userHand.Group == HandFactory.EMPTY_HAND.Group)      // currentPlayer cannot skip
                     return new PlayHandReturn(PlayHandReturnType.Resubmit, " dealer cannot skip ");
                 else
-                { 
+                {
                     _lastValidHand = HandFactory.EMPTY_HAND;
                 }
 
@@ -356,29 +378,28 @@ namespace ZhuoHeiChaCore
             }
             CurrentPlayer = possible_next_player;
 
-            _lastValidPlayer = playerId;
+            LastValidPlayer = playerId;
             CheckPlayerFinished(playerId);
             if (CheckGameEnded())
                 return new PlayHandReturn(PlayHandReturnType.GameEnded);
 
-            // TODO: update UserCard to be the remaining cards of the player
             return new PlayHandReturn(PlayHandReturnType.PlayHandSuccess, UserCard, CurrentPlayer);     // send back the update cards
         }
 
         protected void CheckPlayerFinished(int playerId)
         {
-            if (_cardsInHandByPlayerId[playerId].Count == 0) 
+            if (_cardsInHandByPlayerId[playerId].Count == 0)
             {
                 _finishOrder.Add(playerId);
                 RemainingPlayers.Remove(playerId);
                 _lastValidHand = HandFactory.EMPTY_HAND;
                 // change next valid player to the next one.
-                int possible_next_valid_player = (_lastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
+                int possible_next_valid_player = (LastValidPlayer + 1) % _cardsInHandByPlayerId.Count;
                 while (!RemainingPlayers.Contains(possible_next_valid_player))
                 {
                     possible_next_valid_player = (possible_next_valid_player + 1) % _cardsInHandByPlayerId.Count;
                 }
-                _lastValidPlayer = possible_next_valid_player;
+                LastValidPlayer = possible_next_valid_player;
             }
 
         }
@@ -387,14 +408,15 @@ namespace ZhuoHeiChaCore
         {
             if (RemainingPlayers.All(x => _playerTypeList[x] == PlayerType.Normal))
             {
-                _didBlackAceWin = false; // set who wins
+                _didBlackAceWin = true; // set who wins
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
+                _cardsInHandByPlayerId.Clear();
                 return true;
             }
             else if (RemainingPlayers.All(x => _playerTypeList[x] != PlayerType.Normal))
             {
-                _didBlackAceWin = true;
+                _didBlackAceWin = false;
                 _finishOrder.AddRange(RemainingPlayers);
                 RemainingPlayers.Clear();
                 _cardsInHandByPlayerId.Clear();
@@ -408,8 +430,9 @@ namespace ZhuoHeiChaCore
 
     public interface IGame
     {
-        List<int> RemainingPlayers { get;}
+        List<int> RemainingPlayers { get; }
         int CurrentPlayer { get; }
+        int LastValidPlayer { get; }
         IEnumerable<bool> IsBlackAceList();
         int Capacity { get; }
 
@@ -419,13 +442,4 @@ namespace ZhuoHeiChaCore
         void AceGoPublic(int goPublicPlayerId);
         PlayHandReturn PlayHand(int playerId, List<Card> UserCard);
     }
-
-    public enum PlayerType
-    {
-        Normal,
-        Ace,
-        PublicAce
-    }
-
-    
 }

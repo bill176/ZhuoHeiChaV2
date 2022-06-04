@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 
 namespace ZhuoHeiChaUI.Events
 {
-    public class NotifyPlayHandSuccessEventArgs : EventArgs
+    public class NotifyGameEndedEventArgs
     {
+        public bool IsBlackAceWin { get; set; }
     }
 }
