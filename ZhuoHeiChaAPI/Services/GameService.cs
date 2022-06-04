@@ -26,19 +26,19 @@ namespace ZhuoHeiChaAPI.Services
 
 
 
-        public void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount) 
+        public void InitReturnTable(int gameId, Dictionary<int, List<int>> returnTributeListByPlayerId, Dictionary<int, List<int>> cardsToBeReturnCount)
         {
             _returnTable[gameId] = new Dictionary<int, List<PayerInfo>>();
 
-            foreach (var receiverId in returnTributeListByPlayerId.Keys) 
+            foreach (var receiverId in returnTributeListByPlayerId.Keys)
             {
-                
+
                 _returnTable[gameId][receiverId] = new List<PayerInfo>();
 
                 var ReturnTributeList = returnTributeListByPlayerId[receiverId].ToList();
                 var cardsToBeReturnCountList = cardsToBeReturnCount[receiverId].ToList();
-                
-                for (int i = 0; i < ReturnTributeList.Count; i++) 
+
+                for (int i = 0; i < ReturnTributeList.Count; i++)
                 {
                     _returnTable[gameId][receiverId].Add(new PayerInfo
                     {
@@ -48,7 +48,7 @@ namespace ZhuoHeiChaAPI.Services
                     });
                 }
             }
-                
+
         }
 
         public PayerInfo GetNextPayerTarget(int gameId, int receiverId)
@@ -56,7 +56,7 @@ namespace ZhuoHeiChaAPI.Services
             return _returnTable[gameId][receiverId].FirstOrDefault(x => x.IsFinishedReturnTribute == false);
         }
 
-        public void SetPayerTargetToValid(int gameId, int receiverId, int payerId) 
+        public void SetPayerTargetToValid(int gameId, int receiverId, int payerId)
         {
             var a = _returnTable[gameId][receiverId].Find(x => x.PayerId == payerId).IsFinishedReturnTribute = true;
         }
@@ -90,7 +90,7 @@ namespace ZhuoHeiChaAPI.Services
 
         public int CreateNewGame(int capacity)
         {
-            if(capacity>5 || capacity<3)
+            if (capacity > 5 || capacity < 3)
                 throw new Exception($"Room capacity should in range 3-5! You are tring to create a game with {capacity} people");
 
             // used Interlocked class here for atomicity
@@ -178,7 +178,7 @@ namespace ZhuoHeiChaAPI.Services
 
             var game = gameLockPair.Item1;
             return game.IsBlackAceList();
-            
+
         }
 
         public int GetGameCapacity(int gameId)
@@ -204,6 +204,20 @@ namespace ZhuoHeiChaAPI.Services
             return game.CurrentPlayer;
 
         }
+
+        public int GetLastValidPlayer(int gameId)
+        {
+            if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
+            {
+                throw new Exception($"Failed to get LastValidPlayer for game {gameId}");
+            }
+
+            var game = gameLockPair.Item1;
+            return game.LastValidPlayer;
+
+        }
+
+
         public IEnumerable<int> GetRemainingPlayerList(int gameId)
         {
             // assume gameId is always valid since it's called after ReturnTribute succeeded
@@ -228,11 +242,12 @@ namespace ZhuoHeiChaAPI.Services
         PlayHandReturn PlayHand(int gameId, int playerId, List<Card> UserCard);
         IEnumerable<bool> IsBlackAceList(int gameId);
         int GetGameCapacity(int gameId);
-        void InitReturnTable(int gameId, Dictionary<int, IEnumerable<int>> returnTributeListByPlayerId, Dictionary<int, IEnumerable<int>> cardsToBeReturnCount);
+        void InitReturnTable(int gameId, Dictionary<int, List<int>> returnTributeListByPlayerId, Dictionary<int, List<int>> cardsToBeReturnCount);
         PayerInfo GetNextPayerTarget(int gameId, int receiverId);
         void SetPayerTargetToValid(int gameId, int receiverId, int payerId);
         IEnumerable<int> GetRemainingPlayerList(int gameId);
         int GetCurrentPlayerId(int gameId);
+        int GetLastValidPlayer(int gameId);
     }
 
 

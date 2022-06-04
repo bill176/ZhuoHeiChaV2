@@ -328,7 +328,7 @@ namespace ZhuoHeiChaCore.Test
             InitGame();
             Console.WriteLine(_playerTypeList);
             Assert.True(_finishOrder.Count == 0);
-            Assert.True(_lastValidPlayer == 0);
+            Assert.True(LastValidPlayer == 0);
             Assert.True(_lastValidHand == HandFactory.EMPTY_HAND);
             Assert.True(CurrentPlayer == 0);
         }

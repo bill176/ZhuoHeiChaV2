@@ -45,27 +45,29 @@ namespace ZhuoHeiChaCore
         /// <param name="values"></param>
         /// <param name="playerTypeSelector"></param>
         /// <returns></returns>
-        public List<List<T>> GroupConsecutivePlayersOfSameType<T>(List<T> values, Func<int, PlayerType> playerTypeSelector)
+        public List<List<int>> GroupConsecutivePlayersOfSameType(List<int> playerIdsByFinishOrder, List<PlayerType> playerTypesByPlayerId)
         {
-            var start = 0;
-            var current = 0;
-            var groups = new List<List<T>>();
+            var groupStartIdx = 0;
+            var currentIdx = 0;
+            var groups = new List<List<int>>();
 
-            while (current < values.Count - 1)
+            while (currentIdx < playerIdsByFinishOrder.Count - 1)
             {
-                if (playerTypeSelector(current) == playerTypeSelector(current + 1))
+                var currentPlayerId = playerIdsByFinishOrder[currentIdx];
+                var nextPlayerId = playerIdsByFinishOrder[currentIdx + 1];
+                if (playerTypesByPlayerId[currentPlayerId].IsOfSameParty(playerTypesByPlayerId[nextPlayerId]))
                 {
-                    current++;
+                    currentIdx++;
                 }
                 else
                 {
                     // we want the range to be [start, current]
-                    groups.Add(Enumerable.Range(start, current - start + 1).Select(idx => values[idx]).ToList());
-                    start = current + 1;
-                    current = start;
+                    groups.Add(Enumerable.Range(groupStartIdx, currentIdx - groupStartIdx + 1).Select(idx => playerIdsByFinishOrder[idx]).ToList());
+                    groupStartIdx = currentIdx + 1;
+                    currentIdx = groupStartIdx;
                 }
             }
-            groups.Add(Enumerable.Range(start, current - start + 1).Select(idx => values[idx]).ToList());
+            groups.Add(Enumerable.Range(groupStartIdx, currentIdx - groupStartIdx + 1).Select(idx => playerIdsByFinishOrder[idx]).ToList());
 
             return groups;
         }
@@ -87,7 +89,7 @@ namespace ZhuoHeiChaCore
     public interface IGameHelper
     {
         PlayerType GetPlayerType(List<Card> cardsOfPlayer);
-        List<List<T>> GroupConsecutivePlayersOfSameType<T>(List<T> values, Func<int, PlayerType> playerTypeSelector);
+        List<List<int>> GroupConsecutivePlayersOfSameType(List<int> playerIdsByFinishOrder, List<PlayerType> playerTypesByPlayerId);
         IEnumerable<(int payer, int receiver)> GeneratePayerReceiverPairsForConsecutiveGroups(List<List<int>> groups);
         bool HasFourTwo(List<Card> cards);
         bool HasTwoCats(List<Card> cards);

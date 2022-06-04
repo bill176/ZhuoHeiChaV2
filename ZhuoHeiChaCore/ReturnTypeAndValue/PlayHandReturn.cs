@@ -24,7 +24,7 @@ namespace ZhuoHeiChaCore.ReturnTypeAndValue
         {
             this.Type = Type;
             this.UpdatedCards = UpdatedCards;
-            NextPlayerId = nextPlayerId;
+            this.NextPlayerId = nextPlayerId;
         }
     }
     public enum PlayHandReturnType
