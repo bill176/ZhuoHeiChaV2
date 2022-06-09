@@ -15,4 +15,8 @@
     <ProjectReference Include="..\ZhuoHeiChaShared\ZhuoHeiChaShared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
 </Project>
