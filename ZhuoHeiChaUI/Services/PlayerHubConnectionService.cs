@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using ZhuoHeiChaUI.Events;
 using ZhuoHeiChaShared;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Configuration;
 
 namespace ZhuoHeiChaUI.Services
 {
     public class PlayerHubConnectionService
     {
+        private readonly string _playerHubUrl;
         private HubConnection _connection;
         public string ConnectionId { get; private set; }
 
@@ -25,13 +27,18 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
         public event EventHandler<NotifyGameEndedEventArgs> NotifyGameEnded;
 
+        public PlayerHubConnectionService(IConfiguration configuraion)
+        {
+            _playerHubUrl = configuraion["PlayerHubUrl"];
+        }
+
         /// <summary>
         /// Sets up and starts the connection to playerhub
         /// </summary>
         /// <returns>The connection id</returns>
         public async Task<string> EstablishConnection()
         {
-            _connection = new HubConnectionBuilder().WithUrl("https://localhost:7001/playerhub").Build();
+            _connection = new HubConnectionBuilder().WithUrl(_playerHubUrl).Build();
 
             RegisterEventListeners();
 
