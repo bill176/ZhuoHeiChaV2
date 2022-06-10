@@ -25,7 +25,8 @@ namespace ZhuoHeiChaAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
-            services.AddSignalR();
+            services.AddSignalR()
+                .AddNewtonsoftJsonProtocol();
             services.AddControllers();
             services.AddResponseCompression(opts =>
             {

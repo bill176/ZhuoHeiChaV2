@@ -9,5 +9,7 @@ namespace ZhuoHeiChaShared
         public int CurrentPlayer { get; set; }
         public int LastValidPlayer { get; set; }
         public List<int> LastValidHand { get; set; }
+
+        public Dictionary<int, int> OpponentCardsCount { get; set; }
     }
 }

@@ -429,6 +429,13 @@ namespace ZhuoHeiChaCore
                 return false;
         }
 
+        public Dictionary<int, int> GetOpponentCardsCount()
+        {
+            var a = _cardsInHandByPlayerId.Select(kvp => new KeyValuePair<int, int>(kvp.Key, kvp.Value.Count));
+
+            return new Dictionary<int, int>(a);
+        }
+
     }
 
     public interface IGame
@@ -444,5 +451,6 @@ namespace ZhuoHeiChaCore
         int AddPlayer();
         void AceGoPublic(int goPublicPlayerId);
         PlayHandReturn PlayHand(int playerId, List<Card> UserCard);
+        Dictionary<int, int> GetOpponentCardsCount();
     }
 }

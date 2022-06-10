@@ -138,7 +138,12 @@ namespace ZhuoHeiChaAPI.Controllers
                 {
                     var cardBefore = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item2).ToList();
-                    var initalGamePackage = new InitalGamePackage { CardBefore = cardBefore, CardAfter = cardAfter};
+                    var OpponentCardsCount = _gameService.GetOpponentCardsCount(gameId);
+                    var initalGamePackage = new InitalGamePackage { 
+                        CardBefore = cardBefore, 
+                        CardAfter = cardAfter, 
+                        OpponentCardsCount = OpponentCardsCount
+                    };
 
                     _clientNotificationService.SendInitalGamePackage(gameId, playerId, initalGamePackage);
 
@@ -272,12 +277,14 @@ namespace ZhuoHeiChaAPI.Controllers
             var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
             var lastValidPlayer = _gameService.GetLastValidPlayer(gameId);
             var currentPlayerId = _gameService.GetCurrentPlayerId(gameId);
+            var OpponentCardsCount = _gameService.GetOpponentCardsCount(gameId);
 
             var playHandPackage = new PlayHandPackage
             {
                 CurrentPlayer = currentPlayerId,
                 LastValidPlayer = lastValidPlayer,
-                LastValidHand = lastValidHand
+                LastValidHand = lastValidHand,
+                OpponentCardsCount = OpponentCardsCount
             };
             // notify each remaining players, and twll thwm who is the cureent player
             foreach (var playerId in remainingPlayerList)

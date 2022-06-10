@@ -72,6 +72,16 @@
         <PlayingCards CardIds="@cards" IsInteractive="true" @bind-SelectedCardIds="@SelectedCardIds" />
         <label>@string.Join(',', SelectedCardIds)</label>
         <LastHandComponent Players="@players"></LastHandComponent>
+        @foreach (var kvp in OpponentCardsCount)
+        {
+            @if (playerId != kvp.Key)
+            {
+                <div style="display:inline-block; text-align: center">
+                <RemainingCardCount Player="@players.ElementAtOrDefault(kvp.Key)" remainingCardCount="@kvp.Value"></RemainingCardCount>
+                </div>
+            }
+            
+        }
         break;
 }
 
@@ -82,6 +92,8 @@
     public int GameId { get; set; }
 
     private GameState gameState = GameState.Default;
+
+    private Dictionary<int, int> OpponentCardsCount = new Dictionary<int, int>();
 
     private enum GameState
     {
@@ -98,7 +110,6 @@
     private List<int> cards = new List<int>();
     private bool CanPlayHand = false;
 
-    private List<int> PlayerTypeListThisRound;
 
     private List<int> SelectedCardIds = new List<int>();
 
@@ -111,7 +122,7 @@
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
         PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.NotifyNewPlayerAdded += OnNotifyNewPlayerAdded;
-        PlayerHubConnection.InitializeGameState += InitialGameState;
+        PlayerHubConnection.InitializeGameState += InitializeGameState;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
@@ -155,8 +166,10 @@
 
     }
 
-    private void InitialGameState(object? sender, InitializeGameStateEventArgs args)
+    private void InitializeGameState(object? sender, InitializeGameStateEventArgs args)
     {
+        OpponentCardsCount = args.OpponentCardsCount;
+
         gameState = GameState.DisplayingCard;
         cards = args.CardBefore;
         Console.WriteLine(string.Join(",", cards));
@@ -241,6 +254,9 @@
 
     private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
     {
+        // If this method is called, then someone succeeded playing hand, so update cards count in here.
+        OpponentCardsCount = args.OpponentCardsCount;
+
         var currentPlayerId = args.CurrentPlayerId;
         if (playerId == currentPlayerId)
         {

@@ -1,16 +1,20 @@
-﻿<div class="playingCards">
-    <span class="card-count">@remainingCardCount</span>
-    <span class="card back"></span>
+﻿@using ZhuoHeiChaShared
+
+<div style="display:inline-block; text-align:center">
+    <div>Player: @Player.Name 's remaining cards</div>
+    <div>
+    <div class="playingCards">
+        <span class="card-count">@remainingCardCount</span>
+        <span class="card back"></span>
+    </div>
+    </div>
 </div>
 
 @code {
     [Parameter]
-    public int PlayerId { get; set; }
+    public Player Player { get; set; }
 
-    private int remainingCardCount = 5;
+    [Parameter]
+    public int remainingCardCount { get; set; }
 
-    private void OnCardCountUpdated(int updatedCardCount)
-    {
-        remainingCardCount = updatedCardCount;
-    }
 }
