@@ -233,7 +233,7 @@ namespace ZhuoHeiChaAPI.Services
         {
             if (!_gameSessions.TryGetValue(gameId, out var gameLockPair))
             {
-                throw new Exception($"Failed to get playerTypes for game {gameId}");
+                throw new Exception($"Failed to get Opponent Cards for game {gameId}");
             }
 
             var game = gameLockPair.Item1;

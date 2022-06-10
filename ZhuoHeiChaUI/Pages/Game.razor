@@ -74,7 +74,13 @@
         <LastHandComponent Players="@players"></LastHandComponent>
         @foreach (var kvp in OpponentCardsCount)
         {
-            <RemainingCardCount PlayerId="@kvp.Key" remainingCardCount="@kvp.Value"></RemainingCardCount>
+            @if (playerId != kvp.Key)
+            {
+                <div style="display:inline-block; text-align: center">
+                <RemainingCardCount Player="@players.ElementAtOrDefault(kvp.Key)" remainingCardCount="@kvp.Value"></RemainingCardCount>
+                </div>
+            }
+            
         }
         break;
 }
