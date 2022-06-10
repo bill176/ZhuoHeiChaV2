@@ -7,10 +7,7 @@
     [Parameter]
     public int PlayerId { get; set; }
 
-    private int remainingCardCount = 5;
+    [Parameter]
+    public int remainingCardCount { get; set; }
 
-    private void OnCardCountUpdated(int updatedCardCount)
-    {
-        remainingCardCount = updatedCardCount;
-    }
 }

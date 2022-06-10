@@ -9,5 +9,6 @@ namespace ZhuoHeiChaUI.Events
     {
         public List<int> CardBefore { get; set; }
         public List<int> CardAfter { get; set; }
+        public Dictionary<int, int> OpponentCardsCount { get; set; } 
     }
 }

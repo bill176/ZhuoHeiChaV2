@@ -66,7 +66,8 @@ namespace ZhuoHeiChaUI.Services
                 {
                     CurrentPlayerId = playHandPackage.CurrentPlayer,
                     LastValidPlayer = playHandPackage.LastValidPlayer,
-                    LastValidHand = playHandPackage.LastValidHand
+                    LastValidHand = playHandPackage.LastValidHand,
+                    OpponentCardsCount = playHandPackage.OpponentCardsCount,
                 }));
 
             _connection.On<bool>(ClientHubMethods.AceGoPublic,
@@ -108,7 +109,8 @@ namespace ZhuoHeiChaUI.Services
                 (initalGamePackage) => InitializeGameState?.Invoke(this, new InitializeGameStateEventArgs
                 {
                     CardAfter = initalGamePackage.CardAfter,
-                    CardBefore = initalGamePackage.CardBefore
+                    CardBefore = initalGamePackage.CardBefore,
+                    OpponentCardsCount = initalGamePackage.OpponentCardsCount,
 
                 }));
 
