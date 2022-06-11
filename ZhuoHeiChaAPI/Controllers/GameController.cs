@@ -308,6 +308,19 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+        [HttpGet("DoesGameExist")]
+        public IActionResult DoesGameExist([FromQuery] int gameId)
+        {
+            if (_gameService.DoesGameExist(gameId))
+            {
+                return Ok("True");
+            }
+            else
+            {
+                return Ok("False");
+            }
+        }
+
         private void StartAceGoPublic(int gameId)
         {
             // notify ace go public
