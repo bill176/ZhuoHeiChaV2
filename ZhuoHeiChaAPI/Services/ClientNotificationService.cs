@@ -29,16 +29,6 @@ namespace ZhuoHeiChaAPI.Services
             _hubContext = hubContext;
         }
 
-        public Task NotifyPlayCards(int gameId, int playerId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task NotifyReturnTribute(int gameId, int playerId)
-        {
-            throw new NotImplementedException();
-        }
-
         public void RegisterClient(int gameId, int playerId, Player player)
         {
             var clientId = GetClientId(gameId, playerId);
@@ -57,12 +47,11 @@ namespace ZhuoHeiChaAPI.Services
             _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.NewPlayerAdded, players);
         }
 
-        public async Task SendCardUpdate(int gameId, int playerId, List<int> newCards)
+        private string GetClientId(int gameId, int playerId)
         {
-            var clientId = GetClientId(gameId, playerId);
-            var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.UpdateCards, newCards);
+            return gameId.ToString() + ":" + playerId.ToString();
         }
+
 
         public async Task SendMessageToAll(int gameId, string message)
         {
@@ -74,18 +63,6 @@ namespace ZhuoHeiChaAPI.Services
             var clientId = GetClientId(gameId, playerId);
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.ReceiveMessage, message);
-        }
-
-        public async Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce)
-        {
-            var clientId = GetClientId(gameId, playerId);
-            var connectionId = _playersByClientId[clientId].ConnectionId;
-            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.AceGoPublic, isPublicAce);
-        }
-
-        private string GetClientId(int gameId, int playerId)
-        {
-            return gameId.ToString() + ":" + playerId.ToString();
         }
 
         public async Task NotifyCanStartGame(int gameId, int playerId)
@@ -101,6 +78,7 @@ namespace ZhuoHeiChaAPI.Services
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.InitializeGameState, initalGamePackage);
         }
+
         public async Task NotifyReturnTributeStart(int gameId, int receiver, int payer, int returnTributeCount)
         {
             var clientId = GetClientId(gameId, receiver);
@@ -113,6 +91,20 @@ namespace ZhuoHeiChaAPI.Services
             var clientId = GetClientId(gameId, receiver);
             var connectionId = _playersByClientId[clientId].ConnectionId;
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.NotifyReturnTributeSuccessful, returnedCardIds);
+        }
+
+        public async Task SendCardUpdate(int gameId, int playerId, List<int> newCards)
+        {
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.UpdateCards, newCards);
+        }
+
+        public async Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce)
+        {
+            var clientId = GetClientId(gameId, playerId);
+            var connectionId = _playersByClientId[clientId].ConnectionId;
+            await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.AceGoPublic, isPublicAce);
         }
 
         public async Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage)
@@ -137,17 +129,17 @@ namespace ZhuoHeiChaAPI.Services
     public interface IClientNotificationService
     {
         void RegisterClient(int gameId, int playerId, Player player);
-        Task SendCardUpdate(int gameId, int playerId, List<int> newCards);
-
-        Task SendInitalGamePackage(int gameId, int playerId, InitalGamePackage initalGamePackage);
-        Task NotifyReturnTribute(int gameId, int playerId);
-        Task NotifyPlayCards(int gameId, int playerId);
         Task SendMessageToAll(int gameId, string message);
         Task SendMessageToClient(int gameId, int playerId, string message);
-        Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
+
         Task NotifyCanStartGame(int gameId, int playerId);
+        Task SendInitalGamePackage(int gameId, int playerId, InitalGamePackage initalGamePackage);
+
         Task NotifyReturnTributeStart(int gameId, int receiver, int payer, int cardsToBeReturned);
         Task NotifyReturnTributeSuccessful(int gameId, int receiver, List<int> cardsAfterReturnTribute);
+        Task SendCardUpdate(int gameId, int playerId, List<int> newCards);
+        Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
+
         Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage);
         Task NotifyResubmit(int gameId, int playerId);
         Task NotifyGameEnded(int gameId, bool blackAceWin);

@@ -139,9 +139,10 @@ namespace ZhuoHeiChaAPI.Controllers
                     var cardBefore = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item1).ToList();
                     var cardAfter = _cardHelper.ConvertCardsToIds(cardsPairsByPlayerId[playerId].Item2).ToList();
                     var OpponentCardsCount = _gameService.GetOpponentCardsCount(gameId);
-                    var initalGamePackage = new InitalGamePackage { 
-                        CardBefore = cardBefore, 
-                        CardAfter = cardAfter, 
+                    var initalGamePackage = new InitalGamePackage
+                    {
+                        CardBefore = cardBefore,
+                        CardAfter = cardAfter,
                         OpponentCardsCount = OpponentCardsCount
                     };
 
@@ -181,12 +182,6 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-
-        //localhost:5000/api/game/5/returntribute
-        //body:
-        //    sourcePlayerId: 1,
-        //    targetPlaeyrId: 3,
-        //    card_id: ...
 
         [HttpPost("{gameId:int}/ReturnTribute")]
         public async Task<IActionResult> ReturnTribute(int gameId, [FromQuery] int payer, [FromQuery] int receiver, [FromQuery] string cardsToBeReturnedString)
@@ -237,14 +232,6 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void StartAceGoPublic(int gameId)
-        {
-            // notify ace go public
-            var isPublicAceList = _gameService.IsBlackAceList(gameId).ToList();
-            for (var id = 0; id < isPublicAceList.Count; ++id)
-                _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
-        }
-
         /// <summary>
         /// Set player to public ace
         /// </summary>
@@ -271,27 +258,6 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
-        private void NotifyPlayHand(int gameId, List<int> lastValidHand)
-        {
-            // get current player id
-            var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
-            var lastValidPlayer = _gameService.GetLastValidPlayer(gameId);
-            var currentPlayerId = _gameService.GetCurrentPlayerId(gameId);
-            var OpponentCardsCount = _gameService.GetOpponentCardsCount(gameId);
-
-            var playHandPackage = new PlayHandPackage
-            {
-                CurrentPlayer = currentPlayerId,
-                LastValidPlayer = lastValidPlayer,
-                LastValidHand = lastValidHand,
-                OpponentCardsCount = OpponentCardsCount
-            };
-            // notify each remaining players, and twll thwm who is the cureent player
-            foreach (var playerId in remainingPlayerList)
-            {
-                _clientNotificationService.NotifyPlayHand(gameId, playerId, playHandPackage);
-            }
-        }
 
         [HttpPost("{gameId:int}/PlayHand")]
         public async Task<IActionResult> PlayHand(int gameId, [FromQuery] int playerId, [FromQuery] string cardsTobePlay)
@@ -342,14 +308,34 @@ namespace ZhuoHeiChaAPI.Controllers
             }
         }
 
+        private void StartAceGoPublic(int gameId)
+        {
+            // notify ace go public
+            var isPublicAceList = _gameService.IsBlackAceList(gameId).ToList();
+            for (var id = 0; id < isPublicAceList.Count; ++id)
+                _clientNotificationService.NotifyAceGoPublic(gameId, id, isPublicAceList[id]);
+        }
+        private void NotifyPlayHand(int gameId, List<int> lastValidHand)
+        {
+            // get current player id
+            var remainingPlayerList = _gameService.GetRemainingPlayerList(gameId).ToList();
+            var lastValidPlayer = _gameService.GetLastValidPlayer(gameId);
+            var currentPlayerId = _gameService.GetCurrentPlayerId(gameId);
+            var OpponentCardsCount = _gameService.GetOpponentCardsCount(gameId);
 
-        //[HttpPost("{gameId:int}/PlayOneMoreRound")]
-        //public async Task<IActionResult> PlayOneMoreRound(int gameId, [FromQuery] int playerId, [FromQuery] bool isPlayOneMoreRound)
-        //{
-
-        //}
-
-
+            var playHandPackage = new PlayHandPackage
+            {
+                CurrentPlayer = currentPlayerId,
+                LastValidPlayer = lastValidPlayer,
+                LastValidHand = lastValidHand,
+                OpponentCardsCount = OpponentCardsCount
+            };
+            // notify each remaining players, and twll thwm who is the cureent player
+            foreach (var playerId in remainingPlayerList)
+            {
+                _clientNotificationService.NotifyPlayHand(gameId, playerId, playHandPackage);
+            }
+        }
 
     }
 }

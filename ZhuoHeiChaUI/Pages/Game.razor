@@ -8,34 +8,6 @@
 @using ZhuoHeiChaUI.Events
 @using ZhuoHeiChaUI.Components
 
-@*@if (!successJoin)
-    {
-        <div>
-            <h3>Enter your name</h3>
-            <button @onclick="AddToGame">Enter</button>
-            <div>
-                <label>Your name</label>
-                <input @bind="@userName" />
-            </div>
-        </div>
-    }
-    else
-    {
-        <p>Wait dealer to start game...</p>
-        <p>Current player(s):</p>
-        <WaitingPlayerList Players="@players" />
-        @if (playerId == "0" && StartGameUIFlag)
-        {
-            <button @onclick="StartGame" disabled="@(canStartGame? false : true)">Start Game</button>
-        }
-        @if (StartGameUIFlag)
-        {
-            <p>Wait dealer to start game</p>
-        }
-
-        <ButtonContainer ProcessAceGoPublic=@ProcessAceGoPublic ProcessReturnTribute=@ProcessReturnTribute></ButtonContainer>
-
-    }*@
 
 <Notification DisplayMessage="@DisplayMessage"></Notification>
 
@@ -77,10 +49,10 @@
             @if (playerId != kvp.Key)
             {
                 <div style="display:inline-block; text-align: center">
-                <RemainingCardCount Player="@players.ElementAtOrDefault(kvp.Key)" remainingCardCount="@kvp.Value"></RemainingCardCount>
+                    <RemainingCardCount Player="@players.ElementAtOrDefault(kvp.Key)" remainingCardCount="@kvp.Value"></RemainingCardCount>
                 </div>
             }
-            
+
         }
         break;
 }
@@ -90,10 +62,9 @@
 @code {
     [Parameter]
     public int GameId { get; set; }
+    public string DisplayMessage;
 
     private GameState gameState = GameState.Default;
-
-    private Dictionary<int, int> OpponentCardsCount = new Dictionary<int, int>();
 
     private enum GameState
     {
@@ -103,41 +74,142 @@
         PlayCard
     }
 
+    private Dictionary<int, int> OpponentCardsCount = new Dictionary<int, int>();
     private int playerId;
     private string userName;
     private bool canStartGame = false;
     private List<Player> players = new List<Player>();
     private List<int> cards = new List<int>();
-    private bool CanPlayHand = false;
-
-
     private List<int> SelectedCardIds = new List<int>();
-
-    public string DisplayMessage;
-
     private HubConnection _hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         PlayerHubConnection.ReceiveMessage += OnReceiveMessage;
-        PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
+
         PlayerHubConnection.NotifyNewPlayerAdded += OnNotifyNewPlayerAdded;
+        PlayerHubConnection.NotifyCanStartGame += OnNotifyCanStartGame;
         PlayerHubConnection.InitializeGameState += InitializeGameState;
+
+        PlayerHubConnection.NotifyReturnTributeSuccesful += OnNotifyReturnTributeSuccessful;
         PlayerHubConnection.NotifyCardsUpdated += UpdateCards;
         PlayerHubConnection.NotifyPlayCard += OnNotifyPlayCard;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
-        PlayerHubConnection.NotifyReturnTributeSuccesful += OnNotifyReturnTributeSuccessful;
     }
 
+
+    #region NotificationHandlers
+    private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
+    {
+        Console.WriteLine(args.Message);
+        DisplayMessage = args.Message;
+        StateHasChanged();
+    }
+
+    private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
+    {
+        players = args.UpdatedPlayers;
+        StateHasChanged();
+    }
+
+    private void OnNotifyCanStartGame(object? sender, EventArgs args)
+    {
+        if (playerId != 0)
+        {
+            Console.WriteLine("Non-host player should not receive this notification!");
+            DisplayMessage = "Non-host player should not receive this notification!";
+            StateHasChanged();
+            return;
+        }
+
+        canStartGame = true;
+        StateHasChanged();
+    }
+
+    private void InitializeGameState(object? sender, InitializeGameStateEventArgs args)
+    {
+        OpponentCardsCount = args.OpponentCardsCount;
+
+        gameState = GameState.DisplayingCard;
+        cards = args.CardBefore;
+        Console.WriteLine(string.Join(",", cards));
+        // show cards
+        Console.WriteLine("This is your original cards");
+        DisplayMessage = "This is your cards before pay tribute:" + string.Join(",", cards);
+
+        cards = args.CardAfter;
+        Console.WriteLine(string.Join(",", cards));
+        // show cards
+        Console.WriteLine("This is your cards after pay tribute");
+
+        StateHasChanged();
+    }
+
+    private void OnNotifyReturnTributeSuccessful(object? sender, NotifyReturnTributeSuccessfulEventArgs args)
+    {
+        args.ReturnedCardIds.ForEach(cardId => cards.Remove(cardId));
+        StateHasChanged();
+    }
+
+    private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
+    {
+        cards = args.UpdatedCard;
+        StateHasChanged();
+
+    }
+
+    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
+    {
+        // If this method is called, then someone succeeded playing hand, so update cards count in here.
+        OpponentCardsCount = args.OpponentCardsCount;
+
+        var currentPlayerId = args.CurrentPlayerId;
+        if (playerId == currentPlayerId)
+        {
+            Console.WriteLine("Please select your hand!");
+            DisplayMessage = "Please select your hand!";
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"Waiting for {players[currentPlayerId].Name} to Play hand!");
+            DisplayMessage = $"Waiting for {players[currentPlayerId].Name} to Play hand!";
+        }
+        if (playerId == args.LastValidPlayer)
+        {
+            foreach (int card in args.LastValidHand)
+                if (cards.Contains(card))
+                    cards.Remove(card);
+        }
+        SelectedCardIds = new List<int>();
+        Console.WriteLine($"Last valid Player is {players[args.LastValidPlayer].Name}!");
+
+        var lastValidHand = string.Join(",", args.LastValidHand);
+        Console.WriteLine($"Last valid Hand is {lastValidHand}!");
+
+        StateHasChanged();
+    }
+
+    private void OnNotifyResubmit(object? sender, NotifyResubmitEventArgs args)
+    {
+        Console.WriteLine($"Failed playing hand! Reselect your card");
+        DisplayMessage = $"Failed playing hand! Reselect your card";
+        StateHasChanged();
+    }
+
+    #endregion
+
+
+    #region APIRequest
     private async Task AddToGame()
     {
 
         var connectionId = await PlayerHubConnection.EstablishConnection();
         var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
-        {
-            ConnectionId = connectionId,
-            Name = userName
-        });
+            {
+                ConnectionId = connectionId,
+                Name = userName
+            });
         if (!response.IsSuccessStatusCode) return;
 
         var IdString = await response.Content.ReadAsStringAsync();
@@ -161,39 +233,10 @@
             return;
         }
         Console.WriteLine("Game successfully started!");
-        DisplayMessage ="Game successfully started!";
+        DisplayMessage = "Game successfully started!";
         StateHasChanged();
 
     }
-
-    private void InitializeGameState(object? sender, InitializeGameStateEventArgs args)
-    {
-        OpponentCardsCount = args.OpponentCardsCount;
-
-        gameState = GameState.DisplayingCard;
-        cards = args.CardBefore;
-        Console.WriteLine(string.Join(",", cards));
-        // show cards
-        Console.WriteLine("This is your original cards");
-
-        cards = args.CardAfter;
-        Console.WriteLine(string.Join(",", cards));
-        // show cards
-        Console.WriteLine("This is your cards after pay tribute");
-
-
-        DisplayMessage = "This is your cards after pay tribute:" + string.Join(",", cards);
-        StateHasChanged();
-    }
-
-
-    private void UpdateCards(object? sender, NotifyCardsUpdatedEventArgs args)
-    {
-        cards = args.UpdatedCard;
-        StateHasChanged();
-
-    }
-
 
     private async Task ProcessReturnTribute(int payer)
     {
@@ -232,7 +275,6 @@
 
     private async Task ProcessPlayHand(bool isSkip)
     {
-        CanPlayHand = false;
 
         if (isSkip)
         {
@@ -252,90 +294,11 @@
         StateHasChanged();
     }
 
-    private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
-    {
-        // If this method is called, then someone succeeded playing hand, so update cards count in here.
-        OpponentCardsCount = args.OpponentCardsCount;
-
-        var currentPlayerId = args.CurrentPlayerId;
-        if (playerId == currentPlayerId)
-        {
-            CanPlayHand = true;
-            Console.WriteLine("Please select your hand!");
-            DisplayMessage = "Please select your hand!";
-            StateHasChanged();
-        }
-        else
-        {
-            Console.WriteLine($"Waiting for {players[currentPlayerId].Name} to Play hand!");
-            DisplayMessage = $"Waiting for {players[currentPlayerId].Name} to Play hand!";
-        }
-        if (playerId == args.LastValidPlayer)
-        {
-            foreach (int card in args.LastValidHand)
-                if (cards.Contains(card))
-                    cards.Remove(card);
-        }
-        SelectedCardIds = new List<int>();
-        StateHasChanged();
-        Console.WriteLine($"Last valid Player is {players[args.LastValidPlayer].Name}!");
-
-        var lastValidHand = string.Join(",", args.LastValidHand);
-        Console.WriteLine($"Last valid Hand is {lastValidHand}!");
-
-        DisplayMessage = $"Last valid Player is {players[args.LastValidPlayer].Name}!" + $"Last Valid Hand is {lastValidHand}!";
-        StateHasChanged();
-    }
-
-    private void OnNotifyResubmit(object? sender, NotifyResubmitEventArgs args)
-    {
-        Console.WriteLine($"Failed playing hand! Reselect your card");
-        DisplayMessage = $"Failed playing hand! Reselect your card";
-        CanPlayHand = true;
-        StateHasChanged();
-    }
-
+    #endregion
 
     private void PlayOneMoreRound()
     {
-        // var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?playerId={playerId}&isPlayOneMoreRound={isPlayOneMoreRound}", new { });
         gameState = GameState.WaitingToStart;
         StateHasChanged();
     }
-
-
-    #region NotificationHandlers
-    private void OnNotifyCanStartGame(object? sender, EventArgs args)
-    {
-        if (playerId != 0)
-        {
-            Console.WriteLine("Non-host player should not receive this notification!");
-            DisplayMessage = "Non-host player should not receive this notification!";
-            StateHasChanged();
-            return;
-        }
-
-        canStartGame = true;
-        StateHasChanged();
-    }
-
-    private void OnReceiveMessage(object? sender, ReceiveMessageEventArgs args)
-    {
-        Console.WriteLine(args.Message);
-        DisplayMessage = args.Message;
-        StateHasChanged();
-    }
-
-    private void OnNotifyNewPlayerAdded(object? sender, NotifyNewPlayerAddedEventArgs args)
-    {
-        players = args.UpdatedPlayers;
-        StateHasChanged();
-    }
-
-    private void OnNotifyReturnTributeSuccessful(object? sender, NotifyReturnTributeSuccessfulEventArgs args)
-    {
-        args.ReturnedCardIds.ForEach(cardId => cards.Remove(cardId));
-        StateHasChanged();
-    }
-    #endregion
 }
