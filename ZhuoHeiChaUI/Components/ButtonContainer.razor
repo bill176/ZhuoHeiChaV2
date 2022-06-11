@@ -1,6 +1,7 @@
 ﻿@using ZhuoHeiChaUI.Events
 @using ZhuoHeiChaUI.Services
 @inject PlayerHubConnectionService PlayerHubConnection
+@inject LocalEventService LocalEventService
 
 <h3>ButtonRegion</h3>
 <div>
@@ -134,6 +135,8 @@
         PlayerHubConnection.NotifyResubmit += OnNotifyPlayHandSuccess;
         PlayerHubConnection.NotifyResubmit += OnNotifyResubmit;
         PlayerHubConnection.NotifyGameEnded += OnNotifyGameEnded;
+
+        LocalEventService.ReturnTributeFailed += OnReturnTributeFailed;
     }
 
     private void OnNotifyPlayCard(object? sender, NotifyPlayCardEventArgs args)
@@ -203,6 +206,12 @@
             clientState = ClientState.AskingAnotherRound;
             StateHasChanged();
         }
-        
+
+    }
+
+    private void OnReturnTributeFailed(object? sender, EventArgs args)
+    {
+        clientState = ClientState.ReturningTribute;
+        StateHasChanged();
     }
 }

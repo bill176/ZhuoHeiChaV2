@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @using Microsoft.AspNetCore.SignalR.Client
 @inject PlayerHubConnectionService PlayerHubConnection
+@inject LocalEventService LocalEventService
 @using ZhuoHeiChaShared
 @using ZhuoHeiChaUI.Services
 @using ZhuoHeiChaUI.Events
@@ -206,10 +207,10 @@
 
         var connectionId = await PlayerHubConnection.EstablishConnection();
         var response = await Http.PostAsJsonAsync<Player>($"api/game/{GameId}/players", new Player
-            {
-                ConnectionId = connectionId,
-                Name = userName
-            });
+        {
+            ConnectionId = connectionId,
+            Name = userName
+        });
         if (!response.IsSuccessStatusCode) return;
 
         var IdString = await response.Content.ReadAsStringAsync();
@@ -247,6 +248,7 @@
         {
             Console.WriteLine($"Failed return cards to {players[payer].Name}!");
             DisplayMessage = $"Failed return cards to {players[payer].Name}!";
+            LocalEventService.RaiseReturnTributeFailed();
             StateHasChanged();
             return;
         }

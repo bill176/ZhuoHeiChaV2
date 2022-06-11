@@ -21,6 +21,7 @@ namespace ZhuoHeiChaUI
                 BaseAddress = new Uri(backendAddress)
             });
             builder.Services.AddSingleton<PlayerHubConnectionService>();
+            builder.Services.AddSingleton<LocalEventService>();
 
             await builder.Build().RunAsync();
         }
