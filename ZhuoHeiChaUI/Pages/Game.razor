@@ -49,7 +49,7 @@
         {
             @if (playerId != kvp.Key)
             {
-                <div style="display:inline-block; text-align: center">
+                <div style="display:inline-block; text-align: center; margin: 1em">
                     <RemainingCardCount Player="@players.ElementAtOrDefault(kvp.Key)" remainingCardCount="@kvp.Value"></RemainingCardCount>
                 </div>
             }

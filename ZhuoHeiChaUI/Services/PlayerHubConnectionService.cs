@@ -26,6 +26,7 @@ namespace ZhuoHeiChaUI.Services
         public event EventHandler<NotifyCardsUpdatedEventArgs> NotifyCardsUpdated;
         public event EventHandler<InitializeGameStateEventArgs> InitializeGameState;
         public event EventHandler<NotifyGameEndedEventArgs> NotifyGameEnded;
+        public event EventHandler<NotifyWhoIsPublicAceEventArgs> NotifyWhoIsPublicAce;
 
         public PlayerHubConnectionService(IConfiguration configuraion)
         {
@@ -81,6 +82,12 @@ namespace ZhuoHeiChaUI.Services
                 (isPublicAce) => NotifyAceGoPublic?.Invoke(this, new NotifyAceGoPublicEventArgs
                 {
                     IsPublicAce = isPublicAce
+                }));
+
+            _connection.On<int>(ClientHubMethods.NotifyWhoIsPublicAce,
+                (publicAceId) => NotifyWhoIsPublicAce?.Invoke(this, new NotifyWhoIsPublicAceEventArgs
+                {
+                    PublicAceId = publicAceId
                 }));
 
             _connection.On<int, int>(ClientHubMethods.NotifyReturnTributeStart,

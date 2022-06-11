@@ -243,6 +243,7 @@ namespace ZhuoHeiChaAPI.Controllers
                 if (IsGoPublic)
                     _gameService.AceGoPublic(gameId, playerId);
                 NotifyPlayHand(gameId, new List<int>());
+                await _clientNotificationService.NotifyWhoIsPublicAce(gameId, playerId);
                 return Ok(gameId);
             }
             catch (ArgumentException e)
