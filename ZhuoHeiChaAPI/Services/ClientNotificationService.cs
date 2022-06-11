@@ -107,6 +107,11 @@ namespace ZhuoHeiChaAPI.Services
             await _hubContext.Clients.Client(connectionId).SendAsync(ClientHubMethods.AceGoPublic, isPublicAce);
         }
 
+        public async Task NotifyWhoIsPublicAce(int gameId, int publicAceId)
+        {
+            await _hubContext.Clients.Group(gameId.ToString()).SendAsync(ClientHubMethods.NotifyWhoIsPublicAce, publicAceId);
+        }
+
         public async Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage)
         {
             var clientId = GetClientId(gameId, playerId);
@@ -139,6 +144,7 @@ namespace ZhuoHeiChaAPI.Services
         Task NotifyReturnTributeSuccessful(int gameId, int receiver, List<int> cardsAfterReturnTribute);
         Task SendCardUpdate(int gameId, int playerId, List<int> newCards);
         Task NotifyAceGoPublic(int gameId, int playerId, bool isPublicAce);
+        Task NotifyWhoIsPublicAce(int gameId, int publicAceId);
 
         Task NotifyPlayHand(int gameId, int playerId, PlayHandPackage playHandPackage);
         Task NotifyResubmit(int gameId, int playerId);

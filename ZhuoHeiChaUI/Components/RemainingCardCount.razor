@@ -1,12 +1,22 @@
 ﻿@using ZhuoHeiChaShared
+@using ZhuoHeiChaUI.Services
+@using ZhuoHeiChaUI.Events
+@inject PlayerHubConnectionService PlayerHubConnection
 
-<div style="display:inline-block; text-align:center">
-    <div>Player: @Player.Name 's remaining cards</div>
+<div class="playingCards">
+    <div class="text">Player: @Player.Name 's remaining cards</div>
     <div>
-    <div class="playingCards">
         <span class="card-count">@remainingCardCount</span>
-        <span class="card back"></span>
-    </div>
+
+        @if (isPublicAce)
+        {
+            <img class="cardBack" src="images/ace-of-spades.png" />
+        }
+        else
+        {
+            <img class="cardBack" src="images/playing-card.png" />
+        }
+
     </div>
 </div>
 
@@ -17,4 +27,16 @@
     [Parameter]
     public int remainingCardCount { get; set; }
 
+    public bool isPublicAce { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        PlayerHubConnection.NotifyWhoIsPublicAce += OnPublicAce;
+    }
+    private void OnPublicAce(object? sender, NotifyWhoIsPublicAceEventArgs args)
+    {
+        if (Player.Id == args.PublicAceId)
+            isPublicAce = true;
+        StateHasChanged();
+    }
 }

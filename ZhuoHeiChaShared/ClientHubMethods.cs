@@ -19,6 +19,7 @@ namespace ZhuoHeiChaShared
         public static readonly string NotifyReturnTributeStart = nameof(NotifyReturnTributeStart);
         public static readonly string NotifyReturnTributeSuccessful = nameof(NotifyReturnTributeSuccessful);
         public static readonly string NotifyGameEnded = nameof(NotifyGameEnded);
+        public static readonly string NotifyWhoIsPublicAce = nameof(NotifyWhoIsPublicAce);
         
     }
 }
