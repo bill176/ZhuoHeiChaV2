@@ -1,0 +1,32 @@
+﻿@page "/join-game"
+
+@inject NavigationManager UriHelper
+@inject HttpClient Http
+
+<label>Please enter the game id:</label>
+<input @bind="@gameId" />
+<button @onclick="OnJoinGameClicked">Join!</button>
+
+@code {
+    private int gameId;
+
+    private async Task OnJoinGameClicked()
+    {
+        var response = await Http.GetAsync($"api/game/DoesGameExist?gameId={gameId}");
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Unable to check status of the game!");
+            return;
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var gameExists = Convert.ToBoolean(content);
+        if (!gameExists)
+        {
+            Console.WriteLine($"Game with id {gameId} does not exist!");
+            return;
+        }
+
+        UriHelper.NavigateTo($"game/{gameId}");
+    }
+}

@@ -240,6 +240,11 @@ namespace ZhuoHeiChaAPI.Services
             return game.GetOpponentCardsCount();
 
         }
+
+        public bool DoesGameExist(int gameId)
+        {
+            return _gameSessions.ContainsKey(gameId);
+        }
     }
 
     public interface IGameService
@@ -259,6 +264,7 @@ namespace ZhuoHeiChaAPI.Services
         int GetCurrentPlayerId(int gameId);
         int GetLastValidPlayer(int gameId);
         Dictionary<int, int> GetOpponentCardsCount(int gameId);
+        bool DoesGameExist(int gameId);
     }
 
 
