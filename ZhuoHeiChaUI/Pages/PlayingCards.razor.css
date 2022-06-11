@@ -610,107 +610,107 @@
     }
 
         .playingCards ul.hand li:nth-child(1) {
-            left: 0;
+            left: 0.0em;
         }
 
         .playingCards ul.hand li:nth-child(2) {
-            left: 1.1em;
+            left: 1.4em;
         }
 
         .playingCards ul.hand li:nth-child(3) {
-            left: 2.2em;
+            left: 2.8em;
         }
 
         .playingCards ul.hand li:nth-child(4) {
-            left: 3.3em;
+            left: 4.199999999999999em;
         }
 
         .playingCards ul.hand li:nth-child(5) {
-            left: 4.4em;
+            left: 5.6em;
         }
 
         .playingCards ul.hand li:nth-child(6) {
-            left: 5.5em;
+            left: 7.0em;
         }
 
         .playingCards ul.hand li:nth-child(7) {
-            left: 6.6em;
+            left: 8.399999999999999em;
         }
 
         .playingCards ul.hand li:nth-child(8) {
-            left: 7.7em;
+            left: 9.799999999999999em;
         }
 
         .playingCards ul.hand li:nth-child(9) {
-            left: 8.8em;
+            left: 11.2em;
         }
 
         .playingCards ul.hand li:nth-child(10) {
-            left: 9.9em;
+            left: 12.6em;
         }
 
         .playingCards ul.hand li:nth-child(11) {
-            left: 11em;
+            left: 14.0em;
         }
 
         .playingCards ul.hand li:nth-child(12) {
-            left: 12.1em;
+            left: 15.399999999999999em;
         }
 
         .playingCards ul.hand li:nth-child(13) {
-            left: 13.2em;
+            left: 16.799999999999997em;
         }
 
         .playingCards ul.hand li:nth-child(14) {
-            left: 14.3em;
+            left: 18.2em;
         }
 
         .playingCards ul.hand li:nth-child(15) {
-            left: 15.4em;
+            left: 19.599999999999998em;
         }
 
         .playingCards ul.hand li:nth-child(16) {
-            left: 16.5em;
+            left: 21.0em;
         }
 
         .playingCards ul.hand li:nth-child(17) {
-            left: 17.6em;
+            left: 22.4em;
         }
 
         .playingCards ul.hand li:nth-child(18) {
-            left: 18.7em;
+            left: 23.799999999999997em;
         }
 
         .playingCards ul.hand li:nth-child(19) {
-            left: 19.8em;
+            left: 25.2em;
         }
 
         .playingCards ul.hand li:nth-child(20) {
-            left: 20.9em;
+            left: 26.599999999999998em;
         }
 
         .playingCards ul.hand li:nth-child(21) {
-            left: 22em;
+            left: 28.0em;
         }
 
         .playingCards ul.hand li:nth-child(22) {
-            left: 23.1em;
+            left: 29.4em;
         }
 
         .playingCards ul.hand li:nth-child(23) {
-            left: 24.2em;
+            left: 30.799999999999997em;
         }
 
         .playingCards ul.hand li:nth-child(24) {
-            left: 25.3em;
+            left: 32.199999999999996em;
         }
 
         .playingCards ul.hand li:nth-child(25) {
-            left: 26.4em;
+            left: 33.599999999999994em;
         }
 
         .playingCards ul.hand li:nth-child(26) {
-            left: 27.5em;
+            left: 35.0em;
         }
 
 
