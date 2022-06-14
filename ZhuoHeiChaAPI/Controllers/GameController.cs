@@ -192,7 +192,6 @@ namespace ZhuoHeiChaAPI.Controllers
                 // convert sharedcard(frontend) to Card (backend)
                 var cards = _cardHelper.ConvertIdsToCards(returnedCardIds);
 
-
                 var returnTributeReturnValue = _gameService.ReturnTribute(gameId, payer, receiver, cards);
                 var cardsAfterReturnTribute = returnTributeReturnValue.cardsAfterReturnTribute;
                 var returnTributeValid = returnTributeReturnValue.returnTributeValid;

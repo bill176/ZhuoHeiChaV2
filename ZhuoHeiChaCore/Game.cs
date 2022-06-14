@@ -407,12 +407,16 @@ namespace ZhuoHeiChaCore
         {
             foreach (var ((payer, receiver), cards) in _returnTributeCardsBuffer)
             {
+                Console.WriteLine(payer + "->" + receiver);
+                Console.WriteLine(string.Join(",", cards.Select(x => x.CardType.ToString()) ));
                 foreach (var card in cards)
                 {
                     _cardsInHandByPlayerId[receiver].Remove(card);
                     _cardsInHandByPlayerId[payer].Add(card);
                 }
             }
+
+            _returnTributeCardsBuffer.Clear();
 
             var playerCardsDictionary = new Dictionary<int, IEnumerable<Card>>();
 

@@ -242,6 +242,11 @@
     private async Task ProcessReturnTribute(int payer)
     {
         string cardsToBeReturnedString = string.Join(",", SelectedCardIds);
+
+        //debug
+        Console.WriteLine("debug: " + cardsToBeReturnedString);
+        //
+
         var response = await Http.PostAsJsonAsync($"api/game/{GameId}/ReturnTribute?receiver={playerId}&payer={payer}&cardsToBeReturnedString={cardsToBeReturnedString}", new { });
 
         if (!response.IsSuccessStatusCode)
